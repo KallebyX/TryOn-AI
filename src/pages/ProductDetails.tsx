@@ -107,13 +107,19 @@ export default function ProductDetails() {
       });
       const base64Data = await base64Promise;
 
-      const prompt = `Analise esta imagem. O usuário quer provar o sapato "${product.name}". 
-      1. Verifique se a imagem contém pés, pernas ou o corpo do usuário de forma adequada para provar um sapato.
-      2. Se for válido, descreva como o sapato ficaria.
-      3. Retorne um JSON:
+      const prompt = `Analise esta imagem para um provador virtual de sapatos.
+      Produto: "${product.name}"
+      Estilo: "${product.style}"
+      
+      Instruções:
+      1. Verifique se a imagem mostra claramente os pés ou pernas do usuário.
+      2. Identifique a posição e o ângulo dos pés.
+      3. Se for válido, descreva detalhadamente como o sapato "${product.name}" deve ser posicionado para parecer realista.
+      4. Retorne um JSON estrito:
       {
         "isValid": boolean,
-        "analysis": "descrição ou motivo de invalidade",
+        "analysis": "descrição detalhada do caimento",
+        "positioning_hints": "instruções para a geração da imagem",
         "confidence": "high/medium/low"
       }`;
 
@@ -141,15 +147,32 @@ export default function ProductDetails() {
       const result = JSON.parse(response.text || '{}');
       
       if (result.isValid) {
-        // Try to generate a simulation image using gemini-2.5-flash-image
+        // Try to generate a simulation image using gemini-3.1-flash-image-preview for maximum precision
         try {
-          const genResponse = await ai.models.generateContent({
-            model: 'gemini-2.5-flash-image',
+          // @ts-ignore
+          if (!await window.aistudio?.hasSelectedApiKey()) {
+            // @ts-ignore
+            await window.aistudio?.openSelectKey();
+          }
+          
+          const userAi = new GoogleGenAI({});
+          
+          const genResponse = await userAi.models.generateContent({
+            model: 'gemini-3.1-flash-image-preview',
             contents: {
               parts: [
                 { inlineData: { data: base64Data, mimeType: file.type } },
-                { text: `Coloque o sapato "${product.name}" nos pés da pessoa nesta imagem de forma realista. Mantenha o fundo e a pessoa, apenas adicione o calçado.` }
+                { text: `Coloque o sapato "${product.name}" (${product.style}) nos pés da pessoa nesta imagem. 
+                O sapato deve estar perfeitamente alinhado com a posição dos pés: ${result.positioning_hints}.
+                Mantenha a iluminação, sombras e o fundo originais. O resultado deve parecer uma fotografia real de alta qualidade.` }
               ]
+            },
+            config: {
+              // @ts-ignore
+              imageConfig: {
+                aspectRatio: "1:1",
+                imageSize: "1K"
+              }
             }
           });
 
@@ -161,9 +184,28 @@ export default function ProductDetails() {
             }
           }
           result.simulatedImageUrl = simulatedUrl;
-        } catch (genErr) {
+        } catch (genErr: any) {
           console.error('Generation error:', genErr);
-          result.simulatedImageUrl = product.images[0];
+          // Fallback to gemini-2.5-flash-image if user key fails or is not provided
+          try {
+            const fallbackResponse = await ai.models.generateContent({
+              model: 'gemini-2.5-flash-image',
+              contents: {
+                parts: [
+                  { inlineData: { data: base64Data, mimeType: file.type } },
+                  { text: `Coloque o sapato "${product.name}" nos pés da pessoa nesta imagem de forma realista.` }
+                ]
+              }
+            });
+            for (const part of fallbackResponse.candidates?.[0]?.content?.parts || []) {
+              if (part.inlineData) {
+                result.simulatedImageUrl = `data:image/png;base64,${part.inlineData.data}`;
+                break;
+              }
+            }
+          } catch (fallbackErr) {
+            result.simulatedImageUrl = product.images[0];
+          }
         }
       }
 
@@ -171,8 +213,21 @@ export default function ProductDetails() {
       fetch('/api/ai/try-on/increment', { method: 'POST' }).catch(console.error);
 
       setTryOnResult(result);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error during try-on:', error);
+      if (error.message?.includes('429') || error.message?.includes('RESOURCE_EXHAUSTED')) {
+        setTryOnResult({
+          isValid: false,
+          analysis: 'O limite de uso da IA foi atingido para este mês. Por favor, tente novamente mais tarde ou entre em contato com o suporte.',
+          confidence: 'low'
+        });
+      } else {
+        setTryOnResult({
+          isValid: false,
+          analysis: 'Ocorreu um erro inesperado ao processar sua imagem. Por favor, tente novamente.',
+          confidence: 'low'
+        });
+      }
     } finally {
       setAnalyzing(false);
     }
@@ -251,6 +306,16 @@ export default function ProductDetails() {
                       <Camera className="h-12 w-12 text-red-500 mb-4" />
                       <h3 className="text-lg font-bold text-gray-900 mb-2">Imagem não reconhecida</h3>
                       <p className="text-sm text-gray-600 mb-6">{tryOnResult.analysis || 'Por favor, envie uma foto clara dos seus pés ou pernas para o provador virtual.'}</p>
+                      
+                      <div className="bg-blue-50 p-4 rounded-xl mb-6 text-left w-full border border-blue-100">
+                        <p className="text-xs font-bold text-blue-800 uppercase mb-2">Dica para melhor precisão:</p>
+                        <ul className="text-xs text-blue-700 list-disc ml-4 space-y-1">
+                          <li>Tire a foto em um local bem iluminado.</li>
+                          <li>Mantenha a câmera na altura do tornozelo.</li>
+                          <li>Certifique-se de que seus pés estão totalmente visíveis.</li>
+                        </ul>
+                      </div>
+
                       <div className="flex gap-4">
                         <button 
                           onClick={() => fileInputRef.current?.click()}

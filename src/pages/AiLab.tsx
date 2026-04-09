@@ -83,9 +83,11 @@ export default function AiLab() {
 
 // --- Chat Interface ---
 function ChatInterface() {
-  const [messages, setMessages] = useState<{role: string, text: string}[]>([]);
+  const [messages, setMessages] = useState<{role: string, text: string, image?: string}[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   
   // We need to keep track of the chat session
@@ -96,7 +98,7 @@ function ChatInterface() {
     const chat = ai.chats.create({
       model: "gemini-3-flash-preview",
       config: {
-        systemInstruction: "Você é um assistente de moda útil para a TryOn AI Shoes. Você pode ajudar os usuários a encontrar sapatos, verificar tendências e localizar lojas.",
+        systemInstruction: "Você é um assistente de moda útil para a TryOn AI Shoes. Você pode ajudar os usuários a encontrar sapatos, verificar tendências e analisar imagens de looks. Se o usuário enviar uma imagem, analise-a detalhadamente.",
         tools: [{ googleSearch: {} }],
         toolConfig: { includeServerSideToolInvocations: true }
       }
@@ -108,21 +110,46 @@ function ChatInterface() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => setSelectedImage(reader.result as string);
+      reader.readAsDataURL(file);
+    }
+  };
+
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!input.trim() || !chatSession) return;
+    if ((!input.trim() && !selectedImage) || !chatSession) return;
 
     const userMsg = input;
+    const userImg = selectedImage;
     setInput('');
-    setMessages(prev => [...prev, { role: 'user', text: userMsg }]);
+    setSelectedImage(null);
+    setMessages(prev => [...prev, { role: 'user', text: userMsg, image: userImg || undefined }]);
     setLoading(true);
 
     try {
-      const response = await chatSession.sendMessage({ message: userMsg });
+      let parts: any[] = [{ text: userMsg || "Analise esta imagem." }];
+      
+      if (userImg) {
+        const base64Data = userImg.split(',')[1];
+        const mimeType = userImg.split(';')[0].split(':')[1];
+        parts.push({
+          inlineData: { data: base64Data, mimeType }
+        });
+      }
+
+      const response = await chatSession.sendMessage({ message: parts });
       setMessages(prev => [...prev, { role: 'model', text: response.text || '' }]);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Chat error:', error);
-      setMessages(prev => [...prev, { role: 'model', text: 'Desculpe, encontrei um erro.' }]);
+      let errorMsg = 'Desculpe, encontrei um erro.';
+      if (error.message?.includes('429') || error.message?.includes('RESOURCE_EXHAUSTED')) {
+        errorMsg = 'O limite de uso da IA foi atingido para este mês. Por favor, tente novamente mais tarde.';
+      }
+      setMessages(prev => [...prev, { role: 'model', text: errorMsg }]);
     } finally {
       setLoading(false);
     }
@@ -132,8 +159,8 @@ function ChatInterface() {
     <div className="flex flex-col h-full max-h-[600px]">
       <div className="p-6 border-b border-gray-100 bg-gray-50 flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-semibold text-gray-900">Assistente de Moda</h2>
-          <p className="text-sm text-gray-500">Alimentado por Gemini 3.1 Pro com Busca Google</p>
+          <h2 className="text-lg font-semibold text-gray-900">Assistente de Moda Multimodal</h2>
+          <p className="text-sm text-gray-500">Alimentado por Gemini 3 Flash com Visão e Busca</p>
         </div>
         <div className="flex gap-2 text-gray-400">
           <Search className="h-5 w-5" />
@@ -144,7 +171,7 @@ function ChatInterface() {
         {messages.length === 0 && (
           <div className="text-center text-gray-500 mt-10">
             <MessageSquare className="mx-auto h-12 w-12 text-gray-300 mb-4" />
-            <p>Olá! Posso ajudar você a encontrar as últimas tendências de calçados ou localizar uma loja próxima.</p>
+            <p>Olá! Posso ajudar você a encontrar tendências, analisar seus looks ou localizar lojas.</p>
           </div>
         )}
         {messages.map((msg, idx) => (
@@ -152,6 +179,9 @@ function ChatInterface() {
             <div className={`max-w-[80%] rounded-2xl p-4 ${
               msg.role === 'user' ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-900'
             }`}>
+              {msg.image && (
+                <img src={msg.image} alt="User upload" className="w-full max-w-[200px] rounded-lg mb-2" />
+              )}
               <div className="markdown-body text-sm">
                 <Markdown>{msg.text}</Markdown>
               </div>
@@ -171,17 +201,42 @@ function ChatInterface() {
       </div>
 
       <div className="p-4 border-t border-gray-100">
+        {selectedImage && (
+          <div className="mb-2 relative inline-block">
+            <img src={selectedImage} alt="Preview" className="h-20 w-20 object-cover rounded-lg border border-gray-200" />
+            <button 
+              onClick={() => setSelectedImage(null)}
+              className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 shadow-sm"
+            >
+              <Search className="h-3 w-3 rotate-45" />
+            </button>
+          </div>
+        )}
         <form onSubmit={handleSend} className="flex gap-2">
+          <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleImageSelect}
+            accept="image/*"
+            className="hidden"
+          />
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            className="rounded-full bg-gray-100 p-3 text-gray-600 hover:bg-gray-200"
+          >
+            <Camera className="h-5 w-5" />
+          </button>
           <input
             type="text"
             value={input}
             onChange={e => setInput(e.target.value)}
-            placeholder="Pergunte sobre tendências, lojas ou conselhos de moda..."
+            placeholder="Pergunte algo ou envie uma foto..."
             className="flex-1 rounded-full border-gray-300 bg-gray-50 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500"
           />
           <button
             type="submit"
-            disabled={loading || !input.trim()}
+            disabled={loading || (!input.trim() && !selectedImage)}
             className="rounded-full bg-indigo-600 p-3 text-white hover:bg-indigo-700 disabled:opacity-50"
           >
             <Send className="h-5 w-5" />
@@ -621,9 +676,13 @@ function ImageAnalysis() {
         }
       });
       setResult(response.text || '');
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      setResult('Falha ao analisar imagem.');
+      let errorMsg = 'Falha ao analisar imagem.';
+      if (err.message?.includes('429') || err.message?.includes('RESOURCE_EXHAUSTED')) {
+        errorMsg = 'Limite de uso da IA atingido. Tente novamente mais tarde.';
+      }
+      setResult(errorMsg);
     } finally {
       setLoading(false);
     }

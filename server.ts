@@ -64,7 +64,7 @@ let products: Product[] = [
     sizes: [39, 40, 41, 42, 43],
     colors: ['Marrom', 'Preto'],
     stock: 30,
-    images: ['https://images.unsplash.com/photo-1614252209825-980f82662016?w=800&q=80'],
+    images: ['https://images.unsplash.com/photo-1549298916-b41d501d3772?w=800&q=80'],
     style: 'formal',
   },
   {
