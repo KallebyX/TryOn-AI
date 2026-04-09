@@ -94,7 +94,7 @@ function ChatInterface() {
   useEffect(() => {
     // Initialize chat session
     const chat = ai.chats.create({
-      model: "gemini-3.1-pro-preview",
+      model: "gemini-3-flash-preview",
       config: {
         systemInstruction: "Você é um assistente de moda útil para a TryOn AI Shoes. Você pode ajudar os usuários a encontrar sapatos, verificar tendências e localizar lojas.",
         tools: [{ googleSearch: {} }],
@@ -612,7 +612,7 @@ function ImageAnalysis() {
       const mimeType = image.split(';')[0].split(':')[1];
       
       const response = await ai.models.generateContent({
-        model: 'gemini-3.1-pro-preview',
+        model: 'gemini-3-flash-preview',
         contents: {
           parts: [
             { inlineData: { data: base64Data, mimeType } },

@@ -107,10 +107,13 @@ export default function ProductDetails() {
       });
       const base64Data = await base64Promise;
 
-      const prompt = `Analise esta imagem do pé/perna de um usuário. Ele quer provar virtualmente o sapato "${product.name}". 
-      Descreva como o sapato ficaria nele. Retorne um objeto JSON com:
+      const prompt = `Analise esta imagem. O usuário quer provar o sapato "${product.name}". 
+      1. Verifique se a imagem contém pés, pernas ou o corpo do usuário de forma adequada para provar um sapato.
+      2. Se for válido, descreva como o sapato ficaria.
+      3. Retorne um JSON:
       {
-        "analysis": "descrição do caimento e visual",
+        "isValid": boolean,
+        "analysis": "descrição ou motivo de invalidade",
         "confidence": "high/medium/low"
       }`;
 
@@ -137,13 +140,37 @@ export default function ProductDetails() {
 
       const result = JSON.parse(response.text || '{}');
       
+      if (result.isValid) {
+        // Try to generate a simulation image using gemini-2.5-flash-image
+        try {
+          const genResponse = await ai.models.generateContent({
+            model: 'gemini-2.5-flash-image',
+            contents: {
+              parts: [
+                { inlineData: { data: base64Data, mimeType: file.type } },
+                { text: `Coloque o sapato "${product.name}" nos pés da pessoa nesta imagem de forma realista. Mantenha o fundo e a pessoa, apenas adicione o calçado.` }
+              ]
+            }
+          });
+
+          let simulatedUrl = product.images[0];
+          for (const part of genResponse.candidates?.[0]?.content?.parts || []) {
+            if (part.inlineData) {
+              simulatedUrl = `data:image/png;base64,${part.inlineData.data}`;
+              break;
+            }
+          }
+          result.simulatedImageUrl = simulatedUrl;
+        } catch (genErr) {
+          console.error('Generation error:', genErr);
+          result.simulatedImageUrl = product.images[0];
+        }
+      }
+
       // Increment try-on count in backend
       fetch('/api/ai/try-on/increment', { method: 'POST' }).catch(console.error);
 
-      setTryOnResult({
-        ...result,
-        simulatedImageUrl: product.images[0] // Still using product image as simulation for now
-      });
+      setTryOnResult(result);
     } catch (error) {
       console.error('Error during try-on:', error);
     } finally {
@@ -195,28 +222,51 @@ export default function ProductDetails() {
                   animate={{ opacity: 1, scale: 1 }}
                   className="h-full w-full flex flex-col"
                 >
-                  <div className="relative flex-1 overflow-hidden rounded-2xl bg-white shadow-lg">
-                    {/* Simulated composite image */}
-                    <img 
-                      src={tryOnResult.simulatedImageUrl} 
-                      alt="Virtual Try-On" 
-                      className="h-full w-full object-cover"
-                      referrerPolicy="no-referrer"
-                    />
-                    <div className="absolute bottom-4 left-4 right-4 rounded-xl bg-white/90 p-4 backdrop-blur-sm shadow-sm">
-                      <div className="flex items-center gap-2 mb-2">
-                        <Check className="h-5 w-5 text-green-500" />
-                        <span className="font-semibold text-gray-900">Combinação Perfeita</span>
+                  {tryOnResult.isValid ? (
+                    <>
+                      <div className="relative flex-1 overflow-hidden rounded-2xl bg-white shadow-lg">
+                        <img 
+                          src={tryOnResult.simulatedImageUrl} 
+                          alt="Virtual Try-On" 
+                          className="h-full w-full object-cover"
+                          referrerPolicy="no-referrer"
+                        />
+                        <div className="absolute bottom-4 left-4 right-4 rounded-xl bg-white/90 p-4 backdrop-blur-sm shadow-sm">
+                          <div className="flex items-center gap-2 mb-2">
+                            <Check className="h-5 w-5 text-green-500" />
+                            <span className="font-semibold text-gray-900">Combinação Perfeita</span>
+                          </div>
+                          <p className="text-sm text-gray-700">{tryOnResult.analysis}</p>
+                        </div>
                       </div>
-                      <p className="text-sm text-gray-700">{tryOnResult.analysis}</p>
+                      <button 
+                        onClick={() => setTryOnActive(false)}
+                        className="mt-4 text-sm font-medium text-indigo-600 hover:text-indigo-500"
+                      >
+                        Ver Produto Original
+                      </button>
+                    </>
+                  ) : (
+                    <div className="flex-1 flex flex-col items-center justify-center p-6 bg-white rounded-2xl shadow-lg">
+                      <Camera className="h-12 w-12 text-red-500 mb-4" />
+                      <h3 className="text-lg font-bold text-gray-900 mb-2">Imagem não reconhecida</h3>
+                      <p className="text-sm text-gray-600 mb-6">{tryOnResult.analysis || 'Por favor, envie uma foto clara dos seus pés ou pernas para o provador virtual.'}</p>
+                      <div className="flex gap-4">
+                        <button 
+                          onClick={() => fileInputRef.current?.click()}
+                          className="bg-black text-white px-6 py-2 rounded-full text-sm font-medium"
+                        >
+                          Tentar Outra Foto
+                        </button>
+                        <button 
+                          onClick={() => setTryOnActive(false)}
+                          className="text-gray-500 text-sm font-medium"
+                        >
+                          Cancelar
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                  <button 
-                    onClick={() => setTryOnActive(false)}
-                    className="mt-4 text-sm font-medium text-indigo-600 hover:text-indigo-500"
-                  >
-                    Ver Produto Original
-                  </button>
+                  )}
                 </motion.div>
               ) : null}
             </div>
