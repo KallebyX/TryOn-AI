@@ -17,6 +17,9 @@ export default function ProductDetails() {
   const [tryOnActive, setTryOnActive] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
   const [tryOnResult, setTryOnResult] = useState<any>(null);
+  const [userPhoto, setUserPhoto] = useState<string | null>(null);
+  const [activeView, setActiveView] = useState<'original' | 'profile' | 'frontal'>('original');
+  const [zoomLevel, setZoomLevel] = useState(1);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Reviews State
@@ -98,11 +101,16 @@ export default function ProductDetails() {
 
     setAnalyzing(true);
     setTryOnActive(true);
+    setTryOnResult(null);
     
     try {
       const reader = new FileReader();
       const base64Promise = new Promise<string>((resolve) => {
-        reader.onloadend = () => resolve((reader.result as string).split(',')[1]);
+        reader.onloadend = () => {
+          const base64 = (reader.result as string).split(',')[1];
+          setUserPhoto(reader.result as string);
+          resolve(base64);
+        };
         reader.readAsDataURL(file);
       });
       const base64Data = await base64Promise;
@@ -112,15 +120,17 @@ export default function ProductDetails() {
       Estilo: "${product.style}"
       
       Instruções:
-      1. Verifique se a imagem mostra claramente os pés ou pernas do usuário.
-      2. Identifique a posição e o ângulo dos pés.
-      3. Se for válido, descreva detalhadamente como o sapato "${product.name}" deve ser posicionado para parecer realista.
-      4. Retorne um JSON estrito:
+      1. Verifique se a imagem mostra claramente os pés ou pernas do usuário no chão. Fotos de corpo inteiro são ideais.
+      2. Identifique a posição e o ângulo exato dos pés.
+      3. Se for válido, descreva detalhadamente como o sapato "${product.name}" deve ser posicionado (ângulo, inclinação, perspectiva) para parecer que a pessoa está realmente calçando-o.
+      4. Se NÃO for válido (ex: foto apenas do rosto, pés cortados, ambiente muito escuro), explique o motivo e peça uma foto de corpo inteiro.
+      5. Retorne um JSON estrito:
       {
         "isValid": boolean,
-        "analysis": "descrição detalhada do caimento",
-        "positioning_hints": "instruções para a geração da imagem",
-        "confidence": "high/medium/low"
+        "analysis": "descrição do caimento ou motivo de erro",
+        "positioning_hints": "instruções técnicas detalhadas para a geração da imagem",
+        "confidence": "high/medium/low",
+        "suggestion": "dica para o usuário (ex: 'Tente uma foto com mais luz')"
       }`;
 
       const response = await ai.models.generateContent({
@@ -147,72 +157,58 @@ export default function ProductDetails() {
       const result = JSON.parse(response.text || '{}');
       
       if (result.isValid) {
-        // Try to generate a simulation image using gemini-3.1-flash-image-preview for maximum precision
-        try {
-          // @ts-ignore
-          if (!await window.aistudio?.hasSelectedApiKey()) {
-            // @ts-ignore
-            await window.aistudio?.openSelectKey();
-          }
-          
-          const userAi = new GoogleGenAI({});
-          
-          const genResponse = await userAi.models.generateContent({
-            model: 'gemini-3.1-flash-image-preview',
-            contents: {
-              parts: [
-                { inlineData: { data: base64Data, mimeType: file.type } },
-                { text: `Coloque o sapato "${product.name}" (${product.style}) nos pés da pessoa nesta imagem. 
-                O sapato deve estar perfeitamente alinhado com a posição dos pés: ${result.positioning_hints}.
-                Mantenha a iluminação, sombras e o fundo originais. O resultado deve parecer uma fotografia real de alta qualidade.` }
-              ]
-            },
-            config: {
-              // @ts-ignore
-              imageConfig: {
-                aspectRatio: "1:1",
-                imageSize: "1K"
-              }
-            }
-          });
+        const views: ('original' | 'profile' | 'frontal')[] = ['original', 'profile', 'frontal'];
+        const generatedViews: any = {};
 
-          let simulatedUrl = product.images[0];
-          for (const part of genResponse.candidates?.[0]?.content?.parts || []) {
-            if (part.inlineData) {
-              simulatedUrl = `data:image/png;base64,${part.inlineData.data}`;
-              break;
-            }
-          }
-          result.simulatedImageUrl = simulatedUrl;
-        } catch (genErr: any) {
-          console.error('Generation error:', genErr);
-          // Fallback to gemini-2.5-flash-image if user key fails or is not provided
+        // Generate views sequentially to avoid overwhelming the API
+        for (const view of views) {
           try {
-            const fallbackResponse = await ai.models.generateContent({
+            let viewPrompt = "";
+            if (view === 'original') {
+              viewPrompt = `MODIFIQUE esta imagem para que a pessoa apareça calçando o sapato "${product.name}" (${product.style}). 
+              O sapato deve estar perfeitamente alinhado com os pés da pessoa na posição original da foto. 
+              Mantenha o fundo e as roupas. Adicione sombras realistas.`;
+            } else if (view === 'profile') {
+              viewPrompt = `Gere uma nova imagem mostrando uma vista de PERFIL (lateral) da mesma pessoa da foto original calçando o sapato "${product.name}" (${product.style}). 
+              Mantenha as mesmas roupas e características físicas. O foco deve ser nos pés e no calçado.`;
+            } else {
+              viewPrompt = `Gere uma nova imagem mostrando uma vista FRONTAL (frente) da mesma pessoa da foto original calçando o sapato "${product.name}" (${product.style}). 
+              Mantenha as mesmas roupas e características físicas. O foco deve ser nos pés e no calçado.`;
+            }
+
+            const genResponse = await ai.models.generateContent({
               model: 'gemini-2.5-flash-image',
               contents: {
                 parts: [
                   { inlineData: { data: base64Data, mimeType: file.type } },
-                  { text: `Coloque o sapato "${product.name}" nos pés da pessoa nesta imagem de forma realista.` }
+                  { text: viewPrompt }
                 ]
               }
             });
-            for (const part of fallbackResponse.candidates?.[0]?.content?.parts || []) {
+
+            let simulatedUrl = null;
+            for (const part of genResponse.candidates?.[0]?.content?.parts || []) {
               if (part.inlineData) {
-                result.simulatedImageUrl = `data:image/png;base64,${part.inlineData.data}`;
+                simulatedUrl = `data:image/png;base64,${part.inlineData.data}`;
                 break;
               }
             }
-          } catch (fallbackErr) {
-            result.simulatedImageUrl = product.images[0];
+            generatedViews[view] = simulatedUrl || userPhoto;
+          } catch (genErr) {
+            console.error(`Error generating ${view} view:`, genErr);
+            generatedViews[view] = userPhoto;
           }
         }
+        result.views = generatedViews;
+      } else {
+        result.views = { original: userPhoto, profile: userPhoto, frontal: userPhoto };
       }
 
       // Increment try-on count in backend
       fetch('/api/ai/try-on/increment', { method: 'POST' }).catch(console.error);
 
       setTryOnResult(result);
+      setActiveView('original');
     } catch (error: any) {
       console.error('Error during try-on:', error);
       if (error.message?.includes('429') || error.message?.includes('RESOURCE_EXHAUSTED')) {
@@ -278,29 +274,78 @@ export default function ProductDetails() {
                   className="h-full w-full flex flex-col"
                 >
                   {tryOnResult.isValid ? (
-                    <>
-                      <div className="relative flex-1 overflow-hidden rounded-2xl bg-white shadow-lg">
-                        <img 
-                          src={tryOnResult.simulatedImageUrl} 
-                          alt="Virtual Try-On" 
-                          className="h-full w-full object-cover"
-                          referrerPolicy="no-referrer"
-                        />
-                        <div className="absolute bottom-4 left-4 right-4 rounded-xl bg-white/90 p-4 backdrop-blur-sm shadow-sm">
-                          <div className="flex items-center gap-2 mb-2">
-                            <Check className="h-5 w-5 text-green-500" />
-                            <span className="font-semibold text-gray-900">Combinação Perfeita</span>
-                          </div>
-                          <p className="text-sm text-gray-700">{tryOnResult.analysis}</p>
+                    <div className="h-full w-full flex flex-col">
+                      <div className="relative flex-1 overflow-hidden rounded-2xl bg-white shadow-lg group">
+                        <div 
+                          className="h-full w-full transition-transform duration-300 cursor-zoom-in"
+                          style={{ transform: `scale(${zoomLevel})` }}
+                          onClick={() => setZoomLevel(prev => prev === 1 ? 2 : 1)}
+                        >
+                          <img 
+                            src={tryOnResult.views?.[activeView] || userPhoto || product.images[0]} 
+                            alt="Virtual Try-On" 
+                            className="h-full w-full object-cover"
+                            referrerPolicy="no-referrer"
+                          />
+                        </div>
+                        
+                        {/* Zoom Controls */}
+                        <div className="absolute top-4 right-4 flex flex-col gap-2">
+                          <button 
+                            onClick={(e) => { e.stopPropagation(); setZoomLevel(prev => Math.min(prev + 0.5, 3)); }}
+                            className="bg-white/90 p-2 rounded-full shadow-sm hover:bg-white text-gray-700"
+                            title="Aumentar Zoom"
+                          >
+                            <Sparkles className="h-4 w-4" />
+                          </button>
+                          <button 
+                            onClick={(e) => { e.stopPropagation(); setZoomLevel(1); }}
+                            className="bg-white/90 p-2 rounded-full shadow-sm hover:bg-white text-gray-700"
+                            title="Resetar Zoom"
+                          >
+                            <Check className="h-4 w-4" />
+                          </button>
+                        </div>
+
+                        {/* View Selector */}
+                        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 bg-black/40 backdrop-blur-md p-1.5 rounded-full border border-white/20">
+                          {(['original', 'profile', 'frontal'] as const).map(view => (
+                            <button
+                              key={view}
+                              onClick={() => { setActiveView(view); setZoomLevel(1); }}
+                              className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all ${
+                                activeView === view 
+                                  ? 'bg-white text-black shadow-sm' 
+                                  : 'text-white hover:bg-white/20'
+                              }`}
+                            >
+                              {view === 'original' ? 'Original' : view === 'profile' ? 'Perfil' : 'Frontal'}
+                            </button>
+                          ))}
                         </div>
                       </div>
-                      <button 
-                        onClick={() => setTryOnActive(false)}
-                        className="mt-4 text-sm font-medium text-indigo-600 hover:text-indigo-500"
-                      >
-                        Ver Produto Original
-                      </button>
-                    </>
+
+                      {/* Analysis Text Below Image */}
+                      <div className="mt-6 p-6 bg-white rounded-2xl shadow-sm border border-gray-100 text-left">
+                        <div className="flex items-center gap-2 mb-3">
+                          <Sparkles className="h-5 w-5 text-indigo-600" />
+                          <h4 className="font-bold text-gray-900 uppercase tracking-wider text-sm">Análise do Provador Virtual</h4>
+                        </div>
+                        <p className="text-gray-700 leading-relaxed text-sm">{tryOnResult.analysis}</p>
+                        {tryOnResult.suggestion && (
+                          <div className="mt-4 p-3 bg-indigo-50 rounded-xl border border-indigo-100 flex items-start gap-2">
+                            <span className="text-indigo-600 font-bold text-sm">💡</span>
+                            <p className="text-xs text-indigo-800"><strong>Dica da IA:</strong> {tryOnResult.suggestion}</p>
+                          </div>
+                        )}
+                        <button 
+                          onClick={() => { setTryOnActive(false); setTryOnResult(null); }}
+                          className="mt-6 w-full py-3 text-sm font-bold text-gray-500 hover:text-gray-700 border-t border-gray-100"
+                        >
+                          Voltar para o Produto
+                        </button>
+                      </div>
+                    </div>
                   ) : (
                     <div className="flex-1 flex flex-col items-center justify-center p-6 bg-white rounded-2xl shadow-lg">
                       <Camera className="h-12 w-12 text-red-500 mb-4" />
@@ -373,28 +418,43 @@ export default function ProductDetails() {
             {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
           </div>
 
-          <div className="mt-10 flex flex-col gap-4 sm:flex-row">
+          <div className="mt-10 flex flex-col gap-4">
             <button
               onClick={addToCart}
-              className="flex flex-1 items-center justify-center gap-2 rounded-full bg-black px-8 py-4 text-base font-medium text-white transition-colors hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-black focus:ring-offset-2"
+              className="flex w-full items-center justify-center gap-2 rounded-full bg-black px-8 py-4 text-base font-medium text-white transition-colors hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-black focus:ring-offset-2"
             >
               <ShoppingBag className="h-5 w-5" />
               Adicionar ao Carrinho
             </button>
-            <button
-              onClick={() => fileInputRef.current?.click()}
-              className="flex flex-1 items-center justify-center gap-2 rounded-full border-2 border-indigo-600 bg-white px-8 py-4 text-base font-medium text-indigo-600 transition-colors hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2"
-            >
-              <Camera className="h-5 w-5" />
-              Provador Virtual
-            </button>
-            <input 
-              type="file" 
-              ref={fileInputRef} 
-              onChange={handleTryOnUpload} 
-              accept="image/*" 
-              className="hidden" 
-            />
+            
+            <div className="mt-4 rounded-2xl bg-indigo-50 p-6 border border-indigo-100">
+              <h3 className="text-lg font-bold text-indigo-900 mb-2 flex items-center gap-2">
+                <Sparkles className="h-5 w-5" />
+                Provador Virtual Inteligente
+              </h3>
+              <p className="text-sm text-indigo-700 mb-4">
+                Nossa IA vai analisar seu look e simular o sapato nos seus pés com precisão.
+              </p>
+              <ul className="text-xs text-indigo-800 space-y-2 list-disc ml-5 mb-6">
+                <li>Use uma foto de <strong>corpo inteiro</strong> ou que mostre bem seus <strong>pés no chão</strong>.</li>
+                <li>Certifique-se de que o ambiente esteja <strong>bem iluminado</strong>.</li>
+                <li>Fique em uma posição natural para um melhor alinhamento.</li>
+              </ul>
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                className="w-full flex items-center justify-center gap-2 rounded-full bg-indigo-600 px-8 py-4 text-lg font-bold text-white shadow-lg transition-all hover:bg-indigo-700 hover:scale-105"
+              >
+                <Camera className="h-6 w-6" />
+                Provar Agora
+              </button>
+              <input 
+                type="file" 
+                ref={fileInputRef} 
+                onChange={handleTryOnUpload} 
+                accept="image/*" 
+                className="hidden" 
+              />
+            </div>
           </div>
 
           <div className="mt-10 border-t border-gray-200 pt-8">

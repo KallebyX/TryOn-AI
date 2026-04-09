@@ -7,10 +7,11 @@ import ProductCard from '../components/ProductCard';
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 export default function Home() {
-  const [products, setProducts] = useState([]);
+  const [products, setProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [analyzing, setAnalyzing] = useState(false);
   const [recommendation, setRecommendation] = useState<any>(null);
+  const [selectedSizes, setSelectedSizes] = useState<number[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -84,6 +85,19 @@ export default function Home() {
       setAnalyzing(false);
     }
   };
+
+  const allSizes = Array.from(new Set(products.flatMap((p: any) => p.sizes))).sort((a, b) => a - b);
+
+  const toggleSize = (size: number) => {
+    setSelectedSizes(prev => 
+      prev.includes(size) ? prev.filter(s => s !== size) : [...prev, size]
+    );
+  };
+
+  const filteredProducts = products.filter((product: any) => {
+    if (selectedSizes.length === 0) return true;
+    return selectedSizes.some(size => product.sizes.includes(size));
+  });
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
@@ -175,8 +189,34 @@ export default function Home() {
 
       {/* Product Feed */}
       <section className="mx-auto max-w-7xl px-4 pt-16 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
           <h2 className="text-3xl font-bold tracking-tight text-gray-900">Tendências</h2>
+          
+          {/* Size Filter */}
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-sm font-medium text-gray-700 mr-2">Filtrar por Tamanho:</span>
+            {allSizes.map(size => (
+              <button
+                key={size}
+                onClick={() => toggleSize(size)}
+                className={`flex h-10 w-10 items-center justify-center rounded-lg border text-sm font-medium transition-all ${
+                  selectedSizes.includes(size)
+                    ? 'bg-black text-white border-black'
+                    : 'bg-white text-gray-900 border-gray-200 hover:border-gray-400'
+                }`}
+              >
+                {size}
+              </button>
+            ))}
+            {selectedSizes.length > 0 && (
+              <button
+                onClick={() => setSelectedSizes([])}
+                className="ml-2 text-sm text-indigo-600 hover:text-indigo-500 font-medium"
+              >
+                Limpar
+              </button>
+            )}
+          </div>
         </div>
         
         {loading ? (
@@ -186,11 +226,25 @@ export default function Home() {
             ))}
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            {products.map((product: any) => (
-              <ProductCard key={product.id} product={product} />
-            ))}
-          </div>
+          <>
+            {filteredProducts.length === 0 ? (
+              <div className="text-center py-20">
+                <p className="text-lg text-gray-500">Nenhum produto encontrado para os tamanhos selecionados.</p>
+                <button 
+                  onClick={() => setSelectedSizes([])}
+                  className="mt-4 text-indigo-600 font-medium hover:text-indigo-500"
+                >
+                  Ver todos os produtos
+                </button>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+                {filteredProducts.map((product: any) => (
+                  <ProductCard key={product.id} product={product} />
+                ))}
+              </div>
+            )}
+          </>
         )}
       </section>
     </div>
