@@ -32,7 +32,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             <h3 className="font-semibold text-gray-900 line-clamp-1">{product.name}</h3>
             <p className="text-sm text-gray-500 capitalize">{product.style}</p>
           </div>
-          <p className="font-medium text-gray-900">${product.price}</p>
+          <p className="font-medium text-gray-900">R${product.price}</p>
         </div>
         <Link 
           to={`/product/${product.id}`}

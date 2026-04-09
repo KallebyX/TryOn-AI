@@ -5,6 +5,7 @@ export default function Admin() {
   const [orders, setOrders] = useState<any[]>([]);
   const [products, setProducts] = useState<any[]>([]);
   const [reviews, setReviews] = useState<any[]>([]);
+  const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'orders' | 'reviews'>('orders');
 
@@ -12,21 +13,18 @@ export default function Admin() {
     Promise.all([
       fetch('/api/orders').then(res => res.json()),
       fetch('/api/products').then(res => res.json()),
-      fetch('/api/admin/reviews').then(res => res.json())
-    ]).then(([ordersData, productsData, reviewsData]) => {
+      fetch('/api/admin/reviews').then(res => res.json()),
+      fetch('/api/admin/stats').then(res => res.json())
+    ]).then(([ordersData, productsData, reviewsData, statsData]) => {
       setOrders(ordersData);
       setProducts(productsData);
       setReviews(reviewsData);
+      setStats(statsData);
       setLoading(false);
     });
   }, []);
 
-  if (loading) return <div className="p-8 text-center">Carregando Painel...</div>;
-
-  const totalRevenue = orders.reduce((sum, order) => {
-    const product = products.find(p => p.id === order.productId);
-    return sum + (product?.price || 0);
-  }, 0);
+  if (loading || !stats) return <div className="p-8 text-center">Carregando Painel...</div>;
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
@@ -41,7 +39,7 @@ export default function Admin() {
             </div>
             <div>
               <p className="text-sm font-medium text-gray-500">Receita Total</p>
-              <p className="text-2xl font-bold text-gray-900">R${totalRevenue.toFixed(2)}</p>
+              <p className="text-2xl font-bold text-gray-900">R${stats.totalRevenue.toFixed(2)}</p>
             </div>
           </div>
         </div>
@@ -52,7 +50,7 @@ export default function Admin() {
             </div>
             <div>
               <p className="text-sm font-medium text-gray-500">Total de Pedidos</p>
-              <p className="text-2xl font-bold text-gray-900">{orders.length}</p>
+              <p className="text-2xl font-bold text-gray-900">{stats.totalOrders}</p>
             </div>
           </div>
         </div>
@@ -63,7 +61,7 @@ export default function Admin() {
             </div>
             <div>
               <p className="text-sm font-medium text-gray-500">Produtos</p>
-              <p className="text-2xl font-bold text-gray-900">{products.length}</p>
+              <p className="text-2xl font-bold text-gray-900">{stats.totalProducts}</p>
             </div>
           </div>
         </div>
@@ -74,7 +72,7 @@ export default function Admin() {
             </div>
             <div>
               <p className="text-sm font-medium text-gray-500">Usos do Provador</p>
-              <p className="text-2xl font-bold text-gray-900">124</p>
+              <p className="text-2xl font-bold text-gray-900">{stats.tryOnCount}</p>
             </div>
           </div>
         </div>
@@ -138,15 +136,15 @@ export default function Admin() {
                           {order.customerName}<br/>
                           <span className="text-xs text-gray-400">{order.customerPhone}</span>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{product?.name || 'Unknown'}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{product?.name || 'Desconhecido'}</td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
                             {order.status}
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          ${order.total?.toFixed(2) || '0.00'}
-                          {order.discount > 0 && <span className="block text-xs text-green-600">(-${order.discount.toFixed(2)})</span>}
+                          R${order.total?.toFixed(2) || '0.00'}
+                          {order.discount > 0 && <span className="block text-xs text-green-600">(-R${order.discount.toFixed(2)})</span>}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                           {new Date(order.createdAt).toLocaleDateString()}
@@ -194,7 +192,7 @@ export default function Admin() {
                         ${review.aiSentiment === 'positive' ? 'bg-green-100 text-green-800' : 
                           review.aiSentiment === 'negative' ? 'bg-red-100 text-red-800' : 
                           'bg-gray-100 text-gray-800'}`}>
-                        {review.aiSentiment || 'Neutral'}
+                        {review.aiSentiment === 'positive' ? 'Positivo' : review.aiSentiment === 'negative' ? 'Negativo' : 'Neutro'}
                       </span>
                     </div>
                     {review.aiTags && review.aiTags.length > 0 && (

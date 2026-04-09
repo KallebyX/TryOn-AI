@@ -1,7 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Camera, Sparkles, Upload } from 'lucide-react';
 import { motion } from 'motion/react';
+import { GoogleGenAI } from '@google/genai';
 import ProductCard from '../components/ProductCard';
+
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 export default function Home() {
   const [products, setProducts] = useState([]);
@@ -24,16 +27,57 @@ export default function Home() {
     if (!file) return;
 
     setAnalyzing(true);
-    const formData = new FormData();
-    formData.append('outfitImage', file);
-
+    
     try {
-      const res = await fetch('/api/ai/recommend', {
-        method: 'POST',
-        body: formData,
+      const reader = new FileReader();
+      const base64Promise = new Promise<string>((resolve) => {
+        reader.onloadend = () => resolve((reader.result as string).split(',')[1]);
+        reader.readAsDataURL(file);
       });
-      const data = await res.json();
-      setRecommendation(data);
+      const base64Data = await base64Promise;
+
+      const prompt = `Analise este look. Qual é o estilo? (casual, formal, esportivo). 
+      Com base no estilo, recomende o melhor estilo de sapato.
+      Retorne um objeto JSON:
+      {
+        "outfitStyle": "casual|formal|esportivo",
+        "analysis": "breve explicação",
+        "recommendedColors": ["cor1", "cor2"]
+      }`;
+
+      const response = await ai.models.generateContent({
+        model: 'gemini-3-flash-preview',
+        contents: [
+          {
+            role: 'user',
+            parts: [
+              { text: prompt },
+              {
+                inlineData: {
+                  data: base64Data,
+                  mimeType: file.type
+                }
+              }
+            ]
+          }
+        ],
+        config: {
+          responseMimeType: 'application/json',
+        }
+      });
+
+      const result = JSON.parse(response.text || '{}');
+      
+      // Filter products based on AI result
+      const recommendedProducts = products.filter((p: any) => 
+        p.style.toLowerCase() === result.outfitStyle?.toLowerCase() || 
+        result.recommendedColors?.some((c: string) => p.colors.join(' ').toLowerCase().includes(c.toLowerCase()))
+      );
+
+      setRecommendation({
+        ...result,
+        recommendations: recommendedProducts.length > 0 ? recommendedProducts : products.slice(0, 4)
+      });
     } catch (error) {
       console.error('Error analyzing outfit:', error);
     } finally {

@@ -2,6 +2,9 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Camera, ShoppingBag, Sparkles, Check, ArrowLeft, Star } from 'lucide-react';
 import { motion } from 'motion/react';
+import { GoogleGenAI } from '@google/genai';
+
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 export default function ProductDetails() {
   const { id } = useParams();
@@ -42,13 +45,40 @@ export default function ProductDetails() {
     e.preventDefault();
     setSubmittingReview(true);
     try {
+      // AI Sentiment Analysis in Frontend
+      let aiSentiment = 'neutral';
+      let aiTags = [];
+      
+      try {
+        const prompt = `Analise esta avaliação de produto: "${newReview.comment}". 
+        Retorne um objeto JSON com:
+        {
+          "sentiment": "positive" | "neutral" | "negative",
+          "tags": ["tag1", "tag2"] // max 3 tags curtas como "conforto", "tamanho pequeno"
+        }`;
+
+        const response = await ai.models.generateContent({
+          model: 'gemini-3-flash-preview',
+          contents: [{ role: 'user', parts: [{ text: prompt }] }],
+          config: { responseMimeType: 'application/json' }
+        });
+
+        const aiResult = JSON.parse(response.text || '{}');
+        aiSentiment = aiResult.sentiment || 'neutral';
+        aiTags = aiResult.tags || [];
+      } catch (err) {
+        console.error('AI Sentiment Error:', err);
+      }
+
       const res = await fetch(`/api/products/${id}/reviews`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           customerName: newReview.name,
           rating: newReview.rating,
-          comment: newReview.comment
+          comment: newReview.comment,
+          aiSentiment,
+          aiTags
         })
       });
       if (res.ok) {
@@ -64,22 +94,56 @@ export default function ProductDetails() {
 
   const handleTryOnUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file) return;
+    if (!file || !product) return;
 
     setAnalyzing(true);
     setTryOnActive(true);
     
-    const formData = new FormData();
-    formData.append('footImage', file);
-    formData.append('productId', id || '');
-
     try {
-      const res = await fetch('/api/ai/try-on', {
-        method: 'POST',
-        body: formData,
+      const reader = new FileReader();
+      const base64Promise = new Promise<string>((resolve) => {
+        reader.onloadend = () => resolve((reader.result as string).split(',')[1]);
+        reader.readAsDataURL(file);
       });
-      const data = await res.json();
-      setTryOnResult(data);
+      const base64Data = await base64Promise;
+
+      const prompt = `Analise esta imagem do pé/perna de um usuário. Ele quer provar virtualmente o sapato "${product.name}". 
+      Descreva como o sapato ficaria nele. Retorne um objeto JSON com:
+      {
+        "analysis": "descrição do caimento e visual",
+        "confidence": "high/medium/low"
+      }`;
+
+      const response = await ai.models.generateContent({
+        model: 'gemini-3-flash-preview',
+        contents: [
+          {
+            role: 'user',
+            parts: [
+              { text: prompt },
+              {
+                inlineData: {
+                  data: base64Data,
+                  mimeType: file.type
+                }
+              }
+            ]
+          }
+        ],
+        config: {
+          responseMimeType: 'application/json',
+        }
+      });
+
+      const result = JSON.parse(response.text || '{}');
+      
+      // Increment try-on count in backend
+      fetch('/api/ai/try-on/increment', { method: 'POST' }).catch(console.error);
+
+      setTryOnResult({
+        ...result,
+        simulatedImageUrl: product.images[0] // Still using product image as simulation for now
+      });
     } catch (error) {
       console.error('Error during try-on:', error);
     } finally {
@@ -87,20 +151,24 @@ export default function ProductDetails() {
     }
   };
 
+  const [error, setError] = useState<string | null>(null);
+
   const addToCart = () => {
     if (!selectedSize) {
-      alert('Por favor, selecione um tamanho');
+      setError('Por favor, selecione um tamanho');
       return;
     }
+    setError(null);
     // Simple mock cart
     const cart = JSON.parse(localStorage.getItem('cart') || '[]');
     cart.push({ ...product, selectedSize });
     localStorage.setItem('cart', JSON.stringify(cart));
+    window.dispatchEvent(new Event('cart-updated'));
     navigate('/cart');
   };
 
-  if (loading) return <div className="p-8 text-center">Loading...</div>;
-  if (!product) return <div className="p-8 text-center">Product not found</div>;
+  if (loading) return <div className="p-8 text-center">Carregando...</div>;
+  if (!product) return <div className="p-8 text-center">Produto não encontrado</div>;
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
@@ -165,7 +233,7 @@ export default function ProductDetails() {
         {/* Product Info */}
         <div className="flex flex-col">
           <h1 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">{product.name}</h1>
-          <p className="mt-4 text-2xl font-medium text-gray-900">${product.price}</p>
+          <p className="mt-4 text-2xl font-medium text-gray-900">R${product.price}</p>
 
           <div className="mt-8">
             <h3 className="text-sm font-medium text-gray-900">Selecione o Tamanho</h3>
@@ -173,7 +241,10 @@ export default function ProductDetails() {
               {product.sizes.map((size: number) => (
                 <button
                   key={size}
-                  onClick={() => setSelectedSize(size)}
+                  onClick={() => {
+                    setSelectedSize(size);
+                    setError(null);
+                  }}
                   className={`flex items-center justify-center rounded-xl border py-3 text-sm font-medium uppercase transition-all
                     ${selectedSize === size 
                       ? 'border-black bg-black text-white' 
@@ -184,6 +255,7 @@ export default function ProductDetails() {
                 </button>
               ))}
             </div>
+            {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
           </div>
 
           <div className="mt-10 flex flex-col gap-4 sm:flex-row">

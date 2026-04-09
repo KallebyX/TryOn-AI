@@ -21,6 +21,7 @@ export default function Cart() {
     newCart.splice(index, 1);
     setCart(newCart);
     localStorage.setItem('cart', JSON.stringify(newCart));
+    window.dispatchEvent(new Event('cart-updated'));
   };
 
   const total = cart.reduce((sum, item) => sum + item.price, 0);
@@ -67,6 +68,7 @@ export default function Cart() {
       if (res.ok) {
         localStorage.removeItem('cart');
         setCart([]);
+        window.dispatchEvent(new Event('cart-updated'));
         alert('Pedido realizado com sucesso! Você receberá uma confirmação no WhatsApp em breve.');
         navigate('/');
       }
@@ -114,7 +116,7 @@ export default function Cart() {
                         </h3>
                       </div>
                       <p className="mt-1 text-sm text-gray-500">Tamanho: {item.selectedSize}</p>
-                      <p className="mt-1 text-sm font-medium text-gray-900">${item.price}</p>
+                      <p className="mt-1 text-sm font-medium text-gray-900">R${item.price}</p>
                     </div>
 
                     <div className="mt-4 sm:mt-0 sm:pr-9">
@@ -166,7 +168,7 @@ export default function Cart() {
               <div className="border-t border-gray-200 pt-4 mt-6">
                 <div className="flex items-center justify-between text-base text-gray-900 mb-2">
                   <p>Subtotal</p>
-                  <p>${total.toFixed(2)}</p>
+                  <p>R${total.toFixed(2)}</p>
                 </div>
                 
                 {customerPoints > 0 && (
@@ -196,7 +198,7 @@ export default function Cart() {
 
                 <div className="flex items-center justify-between text-lg font-bold text-gray-900 mt-4">
                   <p>Total</p>
-                  <p>${finalTotal.toFixed(2)}</p>
+                  <p>R${finalTotal.toFixed(2)}</p>
                 </div>
               </div>
 
@@ -207,6 +209,18 @@ export default function Cart() {
               >
                 {isCheckingOut ? 'Processando...' : 'Finalizar Compra'}
               </button>
+
+              <div className="mt-4 text-center">
+                <p className="text-xs text-gray-500 mb-2">Ou se preferir, finalize pelo WhatsApp:</p>
+                <a
+                  href={`https://wa.me/5511999999999?text=${encodeURIComponent(`Olá! Gostaria de comprar:\n\n${cart.map(item => `- ${item.name} (Tam: ${item.selectedSize})`).join('\n')}\n\nTotal: R$${finalTotal.toFixed(2)}`)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 text-green-600 font-medium hover:text-green-700 transition-colors"
+                >
+                  <MessageCircle className="h-4 w-4" /> Finalizar via WhatsApp
+                </a>
+              </div>
             </form>
           </div>
         </div>

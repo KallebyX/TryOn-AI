@@ -229,7 +229,7 @@ function ImageStudio() {
       
       if (mode === 'generate') {
         const response = await userAi.models.generateContent({
-          model: 'gemini-3-pro-image-preview',
+          model: 'gemini-3.1-flash-image-preview',
           contents: { parts: [{ text: prompt }] },
           config: {
             // @ts-ignore
@@ -406,7 +406,7 @@ function VideoStudio() {
       };
 
       const params: any = {
-        model: 'veo-3.1-fast-generate-preview',
+        model: 'veo-3.1-lite-generate-preview',
         config
       };
 

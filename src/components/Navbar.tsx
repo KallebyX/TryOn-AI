@@ -6,12 +6,27 @@ import { onAuthStateChanged } from 'firebase/auth';
 
 export default function Navbar() {
   const [user, setUser] = useState<any>(null);
+  const [cartCount, setCartCount] = useState(0);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
     });
-    return () => unsubscribe();
+
+    const updateCartCount = () => {
+      const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+      setCartCount(cart.length);
+    };
+
+    updateCartCount();
+    window.addEventListener('storage', updateCartCount);
+    window.addEventListener('cart-updated', updateCartCount);
+
+    return () => {
+      unsubscribe();
+      window.removeEventListener('storage', updateCartCount);
+      window.removeEventListener('cart-updated', updateCartCount);
+    };
   }, []);
   return (
     <nav className="sticky top-0 z-50 w-full border-b bg-white/80 backdrop-blur-md">
@@ -54,9 +69,11 @@ export default function Navbar() {
           )}
           <Link to="/cart" className="relative p-2 hover:bg-gray-100 rounded-full transition-colors ml-2">
             <ShoppingBag className="h-5 w-5" />
-            <span className="absolute top-0 right-0 h-4 w-4 rounded-full bg-black text-[10px] font-bold text-white flex items-center justify-center">
-              0
-            </span>
+            {cartCount > 0 && (
+              <span className="absolute top-0 right-0 h-4 w-4 rounded-full bg-black text-[10px] font-bold text-white flex items-center justify-center">
+                {cartCount}
+              </span>
+            )}
           </Link>
         </div>
       </div>

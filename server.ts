@@ -2,16 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import { createServer as createViteServer } from 'vite';
 import path from 'path';
-import { GoogleGenAI } from '@google/genai';
-import multer from 'multer';
 import { v4 as uuidv4 } from 'uuid';
-import fs from 'fs';
-
-// Setup Gemini
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-
-// Setup Multer for memory storage (for prototype)
-const upload = multer({ storage: multer.memoryStorage() });
 
 // Mock Database
 interface Product {
@@ -105,6 +96,8 @@ let customers: Customer[] = [
   { phone: '11999999999', name: 'João Silva', points: 500 } // 500 points = $5.00 discount
 ];
 
+let tryOnCount = 124; // Initial mock value
+
 const POINTS_PER_DOLLAR = 10; // Earn 10 points per $1 spent
 const POINTS_REDEMPTION_RATE = 100; // 100 points = $1 discount
 
@@ -193,6 +186,17 @@ async function startServer() {
     }
   });
 
+  // Admin Stats API
+  app.get('/api/admin/stats', (req, res) => {
+    const totalRevenue = orders.reduce((sum, order) => sum + (order.total || 0), 0);
+    res.json({
+      totalRevenue,
+      totalOrders: orders.length,
+      totalProducts: products.length,
+      tryOnCount
+    });
+  });
+
   // 3. Reviews API
   app.get('/api/products/:id/reviews', (req, res) => {
     const productReviews = reviews.filter(r => r.productId === req.params.id);
@@ -204,7 +208,7 @@ async function startServer() {
   });
 
   app.post('/api/products/:id/reviews', async (req, res) => {
-    const { customerName, rating, comment } = req.body;
+    const { customerName, rating, comment, aiSentiment, aiTags } = req.body;
     const productId = req.params.id;
 
     const newReview: Review = {
@@ -213,145 +217,19 @@ async function startServer() {
       customerName,
       rating,
       comment,
+      aiSentiment: aiSentiment || 'neutral',
+      aiTags: aiTags || [],
       createdAt: new Date().toISOString()
     };
-
-    // AI Sentiment Analysis
-    try {
-      const prompt = `Analise esta avaliação de produto: "${comment}". 
-      Retorne um objeto JSON com:
-      {
-        "sentiment": "positive" | "neutral" | "negative",
-        "tags": ["tag1", "tag2"] // max 3 tags curtas como "conforto", "tamanho pequeno"
-      }`;
-
-      const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
-        contents: [{ role: 'user', parts: [{ text: prompt }] }],
-        config: { responseMimeType: 'application/json' }
-      });
-
-      const aiResult = JSON.parse(response.text || '{}');
-      newReview.aiSentiment = aiResult.sentiment;
-      newReview.aiTags = aiResult.tags;
-    } catch (error) {
-      console.error('AI Sentiment Error:', error);
-      newReview.aiSentiment = 'neutral';
-      newReview.aiTags = [];
-    }
 
     reviews.push(newReview);
     res.status(201).json(newReview);
   });
 
-  // 4. AI Virtual Try-On
-  app.post('/api/ai/try-on', upload.single('footImage'), async (req, res) => {
-    try {
-      const { productId } = req.body;
-      const footImage = req.file;
-
-      if (!footImage || !productId) {
-        return res.status(400).json({ error: 'Faltando imagem do pé ou ID do produto' });
-      }
-
-      const product = products.find(p => p.id === productId);
-      if (!product) {
-        return res.status(404).json({ error: 'Produto não encontrado' });
-      }
-
-      const prompt = `Analise esta imagem do pé/perna de um usuário. Ele quer provar virtualmente o sapato "${product.name}". 
-      Descreva como o sapato ficaria nele. Retorne um objeto JSON com:
-      {
-        "analysis": "descrição do caimento e visual",
-        "confidence": "high/medium/low",
-        "simulatedImageUrl": "uma URL de placeholder para a imagem gerada"
-      }`;
-
-      const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
-        contents: [
-          {
-            role: 'user',
-            parts: [
-              { text: prompt },
-              {
-                inlineData: {
-                  data: footImage.buffer.toString('base64'),
-                  mimeType: footImage.mimetype
-                }
-              }
-            ]
-          }
-        ],
-        config: {
-          responseMimeType: 'application/json',
-        }
-      });
-
-      const result = JSON.parse(response.text || '{}');
-      result.simulatedImageUrl = product.images[0]; 
-
-      res.json(result);
-    } catch (error) {
-      console.error('Try-On Error:', error);
-      res.status(500).json({ error: 'Falha ao processar provador' });
-    }
-  });
-
-  // 5. AI Style Recommendation
-  app.post('/api/ai/recommend', upload.single('outfitImage'), async (req, res) => {
-    try {
-      const outfitImage = req.file;
-      if (!outfitImage) {
-        return res.status(400).json({ error: 'Faltando imagem do look' });
-      }
-
-      const prompt = `Analise este look. Qual é o estilo? (casual, formal, esportivo). 
-      Com base no estilo, recomende o melhor estilo de sapato.
-      Retorne um objeto JSON:
-      {
-        "outfitStyle": "casual|formal|esportivo",
-        "analysis": "breve explicação",
-        "recommendedColors": ["cor1", "cor2"]
-      }`;
-
-      const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
-        contents: [
-          {
-            role: 'user',
-            parts: [
-              { text: prompt },
-              {
-                inlineData: {
-                  data: outfitImage.buffer.toString('base64'),
-                  mimeType: outfitImage.mimetype
-                }
-              }
-            ]
-          }
-        ],
-        config: {
-          responseMimeType: 'application/json',
-        }
-      });
-
-      const result = JSON.parse(response.text || '{}');
-      
-      const recommendedProducts = products.filter(p => 
-        p.style.toLowerCase() === result.outfitStyle?.toLowerCase() || 
-        result.recommendedColors?.some((c: string) => p.colors.join(' ').toLowerCase().includes(c.toLowerCase()))
-      );
-
-      res.json({
-        ...result,
-        recommendations: recommendedProducts.length > 0 ? recommendedProducts : products
-      });
-
-    } catch (error) {
-      console.error('Recommend Error:', error);
-      res.status(500).json({ error: 'Falha ao processar recomendação' });
-    }
+  // 4. AI Virtual Try-On Increment
+  app.post('/api/ai/try-on/increment', (req, res) => {
+    tryOnCount++;
+    res.json({ success: true, tryOnCount });
   });
 
 
