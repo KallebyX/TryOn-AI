@@ -1,5 +1,5 @@
 {
-  "name": "",
-  "description": "",
-  "requestFramePermissions": []
+  "name": "TryOn AI - Futuro dos Calçados",
+  "description": "Loja de calçados inovadora com provador virtual por IA, análise de looks e assistente de moda inteligente.",
+  "requestFramePermissions": ["camera"]
 }

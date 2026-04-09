@@ -17,10 +17,10 @@ export default function Profile() {
         const data = await res.json();
         setCustomer(data);
       } else {
-        setError('Customer not found. Try 11999999999 for the demo account.');
+        setError('Cliente não encontrado. Tente 11999999999 para a conta de demonstração.');
       }
     } catch (err) {
-      setError('Failed to fetch profile.');
+      setError('Falha ao buscar perfil.');
     } finally {
       setLoading(false);
     }
@@ -31,14 +31,14 @@ export default function Profile() {
       <div className="mx-auto max-w-md px-4 py-24 sm:px-6 lg:px-8">
         <div className="rounded-3xl bg-white p-8 shadow-sm border border-gray-100 text-center">
           <User className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Customer Profile</h2>
-          <p className="text-gray-500 mb-8">Enter your WhatsApp number to view your points and order history.</p>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Perfil do Cliente</h2>
+          <p className="text-gray-500 mb-8">Digite seu número de WhatsApp para ver seus pontos e histórico de pedidos.</p>
           
           <form onSubmit={handleLogin} className="space-y-4">
             <input
               type="tel"
               required
-              placeholder="e.g., 11999999999"
+              placeholder="ex: 11999999999"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
               className="block w-full rounded-xl border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-3 border"
@@ -49,7 +49,7 @@ export default function Profile() {
               disabled={loading}
               className="w-full rounded-full bg-black px-4 py-3 text-sm font-medium text-white transition-colors hover:bg-gray-800 disabled:opacity-70"
             >
-              {loading ? 'Loading...' : 'View Profile'}
+              {loading ? 'Carregando...' : 'Ver Perfil'}
             </button>
           </form>
         </div>
@@ -60,9 +60,9 @@ export default function Profile() {
   return (
     <div className="mx-auto max-w-4xl px-4 py-12 sm:px-6 lg:px-8">
       <div className="flex items-center justify-between mb-8">
-        <h1 className="text-3xl font-bold tracking-tight text-gray-900">Welcome, {customer.name}</h1>
+        <h1 className="text-3xl font-bold tracking-tight text-gray-900">Bem-vindo, {customer.name}</h1>
         <button onClick={() => setCustomer(null)} className="text-sm font-medium text-gray-500 hover:text-gray-900">
-          Logout
+          Sair
         </button>
       </div>
 
@@ -71,14 +71,14 @@ export default function Profile() {
         <div className="col-span-1 rounded-3xl bg-gradient-to-br from-indigo-600 to-purple-700 p-8 text-white shadow-lg">
           <div className="flex items-center gap-3 mb-4">
             <Gift className="h-6 w-6 text-indigo-200" />
-            <h2 className="text-xl font-semibold">TryOn Rewards</h2>
+            <h2 className="text-xl font-semibold">Recompensas TryOn</h2>
           </div>
           <p className="text-5xl font-bold mb-2">{customer.points}</p>
-          <p className="text-indigo-100 mb-6">Available Points</p>
+          <p className="text-indigo-100 mb-6">Pontos Disponíveis</p>
           
           <div className="rounded-xl bg-white/10 p-4 backdrop-blur-sm">
-            <p className="text-sm font-medium">Value: ${(customer.points / 100).toFixed(2)}</p>
-            <p className="text-xs text-indigo-200 mt-1">Use points at checkout for discounts. Earn 10 points per $1 spent.</p>
+            <p className="text-sm font-medium">Valor: R${(customer.points / 100).toFixed(2)}</p>
+            <p className="text-xs text-indigo-200 mt-1">Use pontos no checkout para descontos. Ganhe 10 pontos a cada R$1 gasto.</p>
           </div>
         </div>
 
@@ -86,7 +86,7 @@ export default function Profile() {
         <div className="col-span-1 md:col-span-2 rounded-3xl bg-white p-8 shadow-sm border border-gray-100">
           <div className="flex items-center gap-3 mb-6">
             <Clock className="h-6 w-6 text-gray-400" />
-            <h2 className="text-xl font-semibold text-gray-900">Order History</h2>
+            <h2 className="text-xl font-semibold text-gray-900">Histórico de Pedidos</h2>
           </div>
 
           {customer.orders && customer.orders.length > 0 ? (
@@ -98,7 +98,7 @@ export default function Profile() {
                       <Package className="h-5 w-5 text-gray-600" />
                     </div>
                     <div>
-                      <p className="font-medium text-gray-900">Order #{order.id.substring(0, 8)}</p>
+                      <p className="font-medium text-gray-900">Pedido #{order.id.substring(0, 8)}</p>
                       <p className="text-sm text-gray-500">{new Date(order.createdAt).toLocaleDateString()}</p>
                       <div className="mt-1 flex items-center gap-2">
                         <span className="inline-flex items-center rounded-full bg-green-50 px-2 py-1 text-xs font-medium text-green-700">
@@ -111,16 +111,16 @@ export default function Profile() {
                     </div>
                   </div>
                   <div className="mt-4 sm:mt-0 text-right">
-                    <p className="font-semibold text-gray-900">${order.total?.toFixed(2) || '0.00'}</p>
+                    <p className="font-semibold text-gray-900">R${order.total?.toFixed(2) || '0.00'}</p>
                     {order.discount > 0 && (
-                      <p className="text-xs text-green-600">Saved ${order.discount.toFixed(2)} with points</p>
+                      <p className="text-xs text-green-600">Economizou R${order.discount.toFixed(2)} com pontos</p>
                     )}
                   </div>
                 </div>
               ))}
             </div>
           ) : (
-            <p className="text-gray-500">No orders found.</p>
+            <p className="text-gray-500">Nenhum pedido encontrado.</p>
           )}
         </div>
       </div>

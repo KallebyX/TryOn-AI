@@ -21,7 +21,7 @@ export default function Admin() {
     });
   }, []);
 
-  if (loading) return <div className="p-8 text-center">Loading Dashboard...</div>;
+  if (loading) return <div className="p-8 text-center">Carregando Painel...</div>;
 
   const totalRevenue = orders.reduce((sum, order) => {
     const product = products.find(p => p.id === order.productId);
@@ -30,7 +30,7 @@ export default function Admin() {
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-      <h1 className="text-3xl font-bold tracking-tight text-gray-900 mb-8">Merchant Dashboard</h1>
+      <h1 className="text-3xl font-bold tracking-tight text-gray-900 mb-8">Painel do Lojista</h1>
 
       {/* Stats */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-8">
@@ -40,8 +40,8 @@ export default function Admin() {
               <DollarSign className="h-6 w-6 text-green-600" />
             </div>
             <div>
-              <p className="text-sm font-medium text-gray-500">Total Revenue</p>
-              <p className="text-2xl font-bold text-gray-900">${totalRevenue.toFixed(2)}</p>
+              <p className="text-sm font-medium text-gray-500">Receita Total</p>
+              <p className="text-2xl font-bold text-gray-900">R${totalRevenue.toFixed(2)}</p>
             </div>
           </div>
         </div>
@@ -51,7 +51,7 @@ export default function Admin() {
               <Package className="h-6 w-6 text-blue-600" />
             </div>
             <div>
-              <p className="text-sm font-medium text-gray-500">Total Orders</p>
+              <p className="text-sm font-medium text-gray-500">Total de Pedidos</p>
               <p className="text-2xl font-bold text-gray-900">{orders.length}</p>
             </div>
           </div>
@@ -62,7 +62,7 @@ export default function Admin() {
               <TrendingUp className="h-6 w-6 text-indigo-600" />
             </div>
             <div>
-              <p className="text-sm font-medium text-gray-500">Products</p>
+              <p className="text-sm font-medium text-gray-500">Produtos</p>
               <p className="text-2xl font-bold text-gray-900">{products.length}</p>
             </div>
           </div>
@@ -73,7 +73,7 @@ export default function Admin() {
               <Users className="h-6 w-6 text-purple-600" />
             </div>
             <div>
-              <p className="text-sm font-medium text-gray-500">Try-On Uses</p>
+              <p className="text-sm font-medium text-gray-500">Usos do Provador</p>
               <p className="text-2xl font-bold text-gray-900">124</p>
             </div>
           </div>
@@ -91,7 +91,7 @@ export default function Admin() {
                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
             }`}
           >
-            Orders Overview
+            Visão Geral de Pedidos
           </button>
           <button
             onClick={() => setActiveTab('reviews')}
@@ -101,7 +101,7 @@ export default function Admin() {
                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
             }`}
           >
-            Reviews & AI Sentiment
+            Avaliações e Sentimento IA
           </button>
         </nav>
       </div>
@@ -109,24 +109,24 @@ export default function Admin() {
       {activeTab === 'orders' ? (
         <div className="rounded-2xl bg-white shadow-sm border border-gray-100 overflow-hidden">
           <div className="px-6 py-5 border-b border-gray-100">
-            <h3 className="text-lg font-medium leading-6 text-gray-900">Recent Orders</h3>
+            <h3 className="text-lg font-medium leading-6 text-gray-900">Pedidos Recentes</h3>
           </div>
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order ID</th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product</th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID Pedido</th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cliente</th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Produto</th>
                   <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                   <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Data</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {orders.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="px-6 py-4 text-center text-sm text-gray-500">No orders yet</td>
+                    <td colSpan={6} className="px-6 py-4 text-center text-sm text-gray-500">Nenhum pedido ainda</td>
                   </tr>
                 ) : (
                   orders.map((order) => {
@@ -164,8 +164,8 @@ export default function Admin() {
           {reviews.length === 0 ? (
             <div className="text-center py-12 bg-white rounded-2xl border border-gray-100">
               <MessageSquare className="mx-auto h-12 w-12 text-gray-400" />
-              <h3 className="mt-2 text-sm font-medium text-gray-900">No reviews</h3>
-              <p className="mt-1 text-sm text-gray-500">You don't have any product reviews yet.</p>
+              <h3 className="mt-2 text-sm font-medium text-gray-900">Nenhuma avaliação</h3>
+              <p className="mt-1 text-sm text-gray-500">Você ainda não tem avaliações de produtos.</p>
             </div>
           ) : (
             reviews.map((review) => {
@@ -183,12 +183,12 @@ export default function Admin() {
                       ))}
                     </div>
                     <p className="text-gray-700 mb-2">"{review.comment}"</p>
-                    <p className="text-sm text-gray-500">Product: <span className="font-medium">{product?.name || 'Unknown'}</span></p>
+                    <p className="text-sm text-gray-500">Produto: <span className="font-medium">{product?.name || 'Desconhecido'}</span></p>
                   </div>
                   
                   {/* AI Sentiment Box */}
                   <div className="md:w-64 bg-gray-50 rounded-xl p-4 border border-gray-100 flex flex-col justify-center">
-                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">AI Analysis</p>
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Análise IA</p>
                     <div className="flex items-center gap-2 mb-3">
                       <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium capitalize
                         ${review.aiSentiment === 'positive' ? 'bg-green-100 text-green-800' : 

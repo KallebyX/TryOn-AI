@@ -67,12 +67,12 @@ export default function Cart() {
       if (res.ok) {
         localStorage.removeItem('cart');
         setCart([]);
-        alert('Order placed successfully! You will receive a WhatsApp confirmation shortly.');
+        alert('Pedido realizado com sucesso! Você receberá uma confirmação no WhatsApp em breve.');
         navigate('/');
       }
     } catch (error) {
       console.error('Checkout error:', error);
-      alert('Failed to place order.');
+      alert('Falha ao realizar o pedido.');
     } finally {
       setIsCheckingOut(false);
     }
@@ -80,13 +80,13 @@ export default function Cart() {
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-16 sm:px-6 lg:px-8">
-      <h1 className="text-3xl font-bold tracking-tight text-gray-900">Shopping Cart</h1>
+      <h1 className="text-3xl font-bold tracking-tight text-gray-900">Carrinho de Compras</h1>
 
       {cart.length === 0 ? (
         <div className="mt-12 text-center">
-          <p className="text-lg text-gray-500">Your cart is empty.</p>
+          <p className="text-lg text-gray-500">Seu carrinho está vazio.</p>
           <button onClick={() => navigate('/')} className="mt-4 text-indigo-600 font-medium hover:text-indigo-500">
-            Continue Shopping
+            Continuar Comprando
           </button>
         </div>
       ) : (
@@ -113,7 +113,7 @@ export default function Cart() {
                           </a>
                         </h3>
                       </div>
-                      <p className="mt-1 text-sm text-gray-500">Size: {item.selectedSize}</p>
+                      <p className="mt-1 text-sm text-gray-500">Tamanho: {item.selectedSize}</p>
                       <p className="mt-1 text-sm font-medium text-gray-900">${item.price}</p>
                     </div>
 
@@ -123,7 +123,7 @@ export default function Cart() {
                         onClick={() => removeFromCart(index)}
                         className="-m-2 inline-flex p-2 text-gray-400 hover:text-gray-500"
                       >
-                        <span className="sr-only">Remove</span>
+                        <span className="sr-only">Remover</span>
                         <Trash2 className="h-5 w-5" aria-hidden="true" />
                       </button>
                     </div>
@@ -134,10 +134,10 @@ export default function Cart() {
           </ul>
 
           <div className="mt-10 bg-gray-50 rounded-2xl p-6 sm:p-8">
-            <h2 className="text-lg font-medium text-gray-900 mb-6">Checkout Details</h2>
+            <h2 className="text-lg font-medium text-gray-900 mb-6">Detalhes da Compra</h2>
             <form onSubmit={handleCheckout} className="space-y-4">
               <div>
-                <label htmlFor="name" className="block text-sm font-medium text-gray-700">Full Name</label>
+                <label htmlFor="name" className="block text-sm font-medium text-gray-700">Nome Completo</label>
                 <input
                   type="text"
                   id="name"
@@ -148,7 +148,7 @@ export default function Cart() {
                 />
               </div>
               <div>
-                <label htmlFor="phone" className="block text-sm font-medium text-gray-700">WhatsApp Number</label>
+                <label htmlFor="phone" className="block text-sm font-medium text-gray-700">Número do WhatsApp</label>
                 <input
                   type="tel"
                   id="phone"
@@ -159,7 +159,7 @@ export default function Cart() {
                   className="mt-1 block w-full rounded-xl border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-3 border"
                 />
                 <p className="mt-2 text-xs text-gray-500 flex items-center gap-1">
-                  <MessageCircle className="h-3 w-3" /> We will send your order updates via WhatsApp.
+                  <MessageCircle className="h-3 w-3" /> Enviaremos atualizações do pedido pelo WhatsApp.
                 </p>
               </div>
 
@@ -173,7 +173,7 @@ export default function Cart() {
                   <div className="flex items-center justify-between text-sm mb-4 p-3 bg-indigo-50 rounded-xl border border-indigo-100">
                     <div className="flex items-center gap-2">
                       <Gift className="h-4 w-4 text-indigo-600" />
-                      <span className="text-indigo-900 font-medium">You have {customerPoints} points (${(customerPoints/100).toFixed(2)})</span>
+                      <span className="text-indigo-900 font-medium">Você tem {customerPoints} pontos (R${(customerPoints/100).toFixed(2)})</span>
                     </div>
                     <label className="flex items-center gap-2 cursor-pointer">
                       <input 
@@ -182,15 +182,15 @@ export default function Cart() {
                         onChange={(e) => setUsePoints(e.target.checked)}
                         className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
                       />
-                      <span className="text-indigo-700 text-xs font-medium">Use Points</span>
+                      <span className="text-indigo-700 text-xs font-medium">Usar Pontos</span>
                     </label>
                   </div>
                 )}
 
                 {usePoints && discount > 0 && (
                   <div className="flex items-center justify-between text-sm text-green-600 mb-2">
-                    <p>Points Discount</p>
-                    <p>-${discount.toFixed(2)}</p>
+                    <p>Desconto de Pontos</p>
+                    <p>-R${discount.toFixed(2)}</p>
                   </div>
                 )}
 
@@ -205,7 +205,7 @@ export default function Cart() {
                 disabled={isCheckingOut}
                 className="mt-6 w-full rounded-full border border-transparent bg-black px-4 py-4 text-base font-medium text-white shadow-sm hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-black focus:ring-offset-2 disabled:opacity-70"
               >
-                {isCheckingOut ? 'Processing...' : 'Complete Order'}
+                {isCheckingOut ? 'Processando...' : 'Finalizar Compra'}
               </button>
             </form>
           </div>

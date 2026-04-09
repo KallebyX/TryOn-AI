@@ -15,7 +15,7 @@ export default function Navbar() {
   }, []);
   return (
     <nav className="sticky top-0 z-50 w-full border-b bg-white/80 backdrop-blur-md">
-      <div className="container mx-auto flex h-16 items-center justify-between px-4">
+      <div className="container mx-auto flex h-16 items-center justify-between px-4 overflow-x-auto">
         <Link to="/" className="flex items-center gap-2 font-bold text-xl tracking-tight">
           <Camera className="h-6 w-6" />
           <span>TryOn AI</span>
@@ -23,19 +23,19 @@ export default function Navbar() {
         
         <div className="flex items-center gap-6">
           <Link to="/" className="text-sm font-medium hover:text-gray-600 transition-colors">
-            Shop
+            Loja
           </Link>
           <Link to="/profile" className="text-sm font-medium hover:text-gray-600 transition-colors flex items-center gap-1">
             <User className="h-4 w-4" />
-            Profile
+            Perfil
           </Link>
           <Link to="/ai-lab" className="text-sm font-medium hover:text-gray-600 transition-colors flex items-center gap-1 text-indigo-600">
             <Sparkles className="h-4 w-4" />
-            AI Lab
+            Laboratório IA
           </Link>
           <Link to="/admin" className="text-sm font-medium hover:text-gray-600 transition-colors flex items-center gap-1">
             <LayoutDashboard className="h-4 w-4" />
-            Admin
+            Painel Admin
           </Link>
           <div className="h-4 w-px bg-gray-300 mx-2"></div>
           {user ? (
@@ -43,13 +43,13 @@ export default function Navbar() {
               <img src={user.photoURL || ''} alt="Profile" className="w-6 h-6 rounded-full" referrerPolicy="no-referrer" />
               <button onClick={logOut} className="text-sm font-medium text-gray-600 hover:text-gray-900 flex items-center gap-1">
                 <LogOut className="h-4 w-4" />
-                Logout
+                Sair
               </button>
             </div>
           ) : (
             <button onClick={signInWithGoogle} className="text-sm font-medium text-indigo-600 hover:text-indigo-700 flex items-center gap-1">
               <LogIn className="h-4 w-4" />
-              Login
+              Entrar
             </button>
           )}
           <Link to="/cart" className="relative p-2 hover:bg-gray-100 rounded-full transition-colors ml-2">

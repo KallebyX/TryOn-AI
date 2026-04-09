@@ -58,31 +58,31 @@ interface Customer {
 let products: Product[] = [
   {
     id: '1',
-    name: 'Nike Air Max 270',
-    price: 150,
+    name: 'Air Max Pro',
+    price: 199.99,
     sizes: [38, 39, 40, 41, 42],
-    colors: ['Black', 'White'],
-    stock: 20,
+    colors: ['Preto', 'Branco', 'Vermelho'],
+    stock: 50,
     images: ['https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=800&q=80'],
-    style: 'sport',
+    style: 'esportivo',
   },
   {
     id: '2',
-    name: 'Classic Leather Oxford',
-    price: 120,
+    name: 'Couro Clássico',
+    price: 149.99,
     sizes: [39, 40, 41, 42, 43],
-    colors: ['Brown', 'Black'],
-    stock: 15,
+    colors: ['Marrom', 'Preto'],
+    stock: 30,
     images: ['https://images.unsplash.com/photo-1614252209825-980f82662016?w=800&q=80'],
     style: 'formal',
   },
   {
     id: '3',
-    name: 'Vans Old Skool',
-    price: 70,
+    name: 'Tênis Urbano',
+    price: 129.99,
     sizes: [36, 37, 38, 39, 40],
-    colors: ['Black/White'],
-    stock: 50,
+    colors: ['Branco/Preto'],
+    stock: 100,
     images: ['https://images.unsplash.com/photo-1525966222134-fcfa99b8ae77?w=800&q=80'],
     style: 'casual',
   }
@@ -127,7 +127,7 @@ async function startServer() {
     if (product) {
       res.json(product);
     } else {
-      res.status(404).json({ error: 'Product not found' });
+      res.status(404).json({ error: 'Produto não encontrado' });
     }
   });
 
@@ -189,7 +189,7 @@ async function startServer() {
       const customerOrders = orders.filter(o => o.customerPhone === req.params.phone);
       res.json({ ...customer, orders: customerOrders });
     } else {
-      res.status(404).json({ error: 'Customer not found' });
+      res.status(404).json({ error: 'Cliente não encontrado' });
     }
   });
 
@@ -218,11 +218,11 @@ async function startServer() {
 
     // AI Sentiment Analysis
     try {
-      const prompt = `Analyze this product review: "${comment}". 
-      Return a JSON object with:
+      const prompt = `Analise esta avaliação de produto: "${comment}". 
+      Retorne um objeto JSON com:
       {
         "sentiment": "positive" | "neutral" | "negative",
-        "tags": ["tag1", "tag2"] // max 3 short tags like "conforto", "tamanho pequeno"
+        "tags": ["tag1", "tag2"] // max 3 tags curtas como "conforto", "tamanho pequeno"
       }`;
 
       const response = await ai.models.generateContent({
@@ -251,20 +251,20 @@ async function startServer() {
       const footImage = req.file;
 
       if (!footImage || !productId) {
-        return res.status(400).json({ error: 'Missing footImage or productId' });
+        return res.status(400).json({ error: 'Faltando imagem do pé ou ID do produto' });
       }
 
       const product = products.find(p => p.id === productId);
       if (!product) {
-        return res.status(404).json({ error: 'Product not found' });
+        return res.status(404).json({ error: 'Produto não encontrado' });
       }
 
-      const prompt = `Analyze this image of a user's foot/leg. They want to virtually try on a shoe called "${product.name}". 
-      Describe how the shoe would fit and look on them. Return a JSON object with:
+      const prompt = `Analise esta imagem do pé/perna de um usuário. Ele quer provar virtualmente o sapato "${product.name}". 
+      Descreva como o sapato ficaria nele. Retorne um objeto JSON com:
       {
-        "analysis": "description of the fit and look",
+        "analysis": "descrição do caimento e visual",
         "confidence": "high/medium/low",
-        "simulatedImageUrl": "a placeholder URL for the generated image"
+        "simulatedImageUrl": "uma URL de placeholder para a imagem gerada"
       }`;
 
       const response = await ai.models.generateContent({
@@ -294,7 +294,7 @@ async function startServer() {
       res.json(result);
     } catch (error) {
       console.error('Try-On Error:', error);
-      res.status(500).json({ error: 'Failed to process try-on' });
+      res.status(500).json({ error: 'Falha ao processar provador' });
     }
   });
 
@@ -303,16 +303,16 @@ async function startServer() {
     try {
       const outfitImage = req.file;
       if (!outfitImage) {
-        return res.status(400).json({ error: 'Missing outfitImage' });
+        return res.status(400).json({ error: 'Faltando imagem do look' });
       }
 
-      const prompt = `Analyze this outfit. What style is it? (casual, formal, sport). 
-      Based on the style, recommend the best shoe style.
-      Return a JSON object:
+      const prompt = `Analise este look. Qual é o estilo? (casual, formal, esportivo). 
+      Com base no estilo, recomende o melhor estilo de sapato.
+      Retorne um objeto JSON:
       {
-        "outfitStyle": "casual|formal|sport",
-        "analysis": "brief explanation",
-        "recommendedColors": ["color1", "color2"]
+        "outfitStyle": "casual|formal|esportivo",
+        "analysis": "breve explicação",
+        "recommendedColors": ["cor1", "cor2"]
       }`;
 
       const response = await ai.models.generateContent({
@@ -350,7 +350,7 @@ async function startServer() {
 
     } catch (error) {
       console.error('Recommend Error:', error);
-      res.status(500).json({ error: 'Failed to process recommendation' });
+      res.status(500).json({ error: 'Falha ao processar recomendação' });
     }
   });
 

@@ -89,7 +89,7 @@ export default function ProductDetails() {
 
   const addToCart = () => {
     if (!selectedSize) {
-      alert('Please select a size');
+      alert('Por favor, selecione um tamanho');
       return;
     }
     // Simple mock cart
@@ -108,7 +108,7 @@ export default function ProductDetails() {
         onClick={() => navigate(-1)}
         className="mb-8 flex items-center gap-2 text-sm font-medium text-gray-500 hover:text-gray-900"
       >
-        <ArrowLeft className="h-4 w-4" /> Back
+        <ArrowLeft className="h-4 w-4" /> Voltar
       </button>
 
       <div className="grid grid-cols-1 gap-x-8 gap-y-10 lg:grid-cols-2">
@@ -119,7 +119,7 @@ export default function ProductDetails() {
               {analyzing ? (
                 <div className="flex flex-col items-center gap-4">
                   <Sparkles className="h-12 w-12 animate-pulse text-indigo-600" />
-                  <p className="text-lg font-medium text-gray-900">AI is analyzing your foot and generating the try-on...</p>
+                  <p className="text-lg font-medium text-gray-900">A IA está analisando seu pé e gerando o provador...</p>
                 </div>
               ) : tryOnResult ? (
                 <motion.div 
@@ -138,7 +138,7 @@ export default function ProductDetails() {
                     <div className="absolute bottom-4 left-4 right-4 rounded-xl bg-white/90 p-4 backdrop-blur-sm shadow-sm">
                       <div className="flex items-center gap-2 mb-2">
                         <Check className="h-5 w-5 text-green-500" />
-                        <span className="font-semibold text-gray-900">Perfect Fit Match</span>
+                        <span className="font-semibold text-gray-900">Combinação Perfeita</span>
                       </div>
                       <p className="text-sm text-gray-700">{tryOnResult.analysis}</p>
                     </div>
@@ -147,7 +147,7 @@ export default function ProductDetails() {
                     onClick={() => setTryOnActive(false)}
                     className="mt-4 text-sm font-medium text-indigo-600 hover:text-indigo-500"
                   >
-                    View Original Product
+                    Ver Produto Original
                   </button>
                 </motion.div>
               ) : null}
@@ -168,7 +168,7 @@ export default function ProductDetails() {
           <p className="mt-4 text-2xl font-medium text-gray-900">${product.price}</p>
 
           <div className="mt-8">
-            <h3 className="text-sm font-medium text-gray-900">Select Size</h3>
+            <h3 className="text-sm font-medium text-gray-900">Selecione o Tamanho</h3>
             <div className="mt-4 grid grid-cols-4 gap-4 sm:grid-cols-6">
               {product.sizes.map((size: number) => (
                 <button
@@ -192,14 +192,14 @@ export default function ProductDetails() {
               className="flex flex-1 items-center justify-center gap-2 rounded-full bg-black px-8 py-4 text-base font-medium text-white transition-colors hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-black focus:ring-offset-2"
             >
               <ShoppingBag className="h-5 w-5" />
-              Add to Cart
+              Adicionar ao Carrinho
             </button>
             <button
               onClick={() => fileInputRef.current?.click()}
               className="flex flex-1 items-center justify-center gap-2 rounded-full border-2 border-indigo-600 bg-white px-8 py-4 text-base font-medium text-indigo-600 transition-colors hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2"
             >
               <Camera className="h-5 w-5" />
-              Virtual Try-On
+              Provador Virtual
             </button>
             <input 
               type="file" 
@@ -211,13 +211,13 @@ export default function ProductDetails() {
           </div>
 
           <div className="mt-10 border-t border-gray-200 pt-8">
-            <h3 className="text-sm font-medium text-gray-900">Description</h3>
+            <h3 className="text-sm font-medium text-gray-900">Descrição</h3>
             <div className="mt-4 prose prose-sm text-gray-500">
-              <p>Experience the perfect blend of style and comfort with the {product.name}. Use our AI Virtual Try-On feature to see exactly how they look on your feet before you buy.</p>
+              <p>Experimente a combinação perfeita de estilo e conforto com o {product.name}. Use nosso Provador Virtual com IA para ver exatamente como eles ficam nos seus pés antes de comprar.</p>
               <ul className="mt-4 list-disc pl-4">
-                <li>Style: {product.style}</li>
-                <li>Available Colors: {product.colors.join(', ')}</li>
-                <li>In Stock: {product.stock} units</li>
+                <li>Estilo: {product.style}</li>
+                <li>Cores Disponíveis: {product.colors.join(', ')}</li>
+                <li>Em Estoque: {product.stock} unidades</li>
               </ul>
             </div>
           </div>
@@ -226,17 +226,17 @@ export default function ProductDetails() {
 
       {/* Reviews Section */}
       <div className="mt-16 border-t border-gray-200 pt-10">
-        <h2 className="text-2xl font-bold tracking-tight text-gray-900">Customer Reviews</h2>
+        <h2 className="text-2xl font-bold tracking-tight text-gray-900">Avaliações de Clientes</h2>
         
         <div className="mt-8 grid grid-cols-1 gap-12 lg:grid-cols-3">
           {/* Write a review */}
           <div className="lg:col-span-1">
-            <h3 className="text-lg font-medium text-gray-900">Write a Review</h3>
-            <p className="mt-1 text-sm text-gray-500">Share your thoughts and help other customers.</p>
+            <h3 className="text-lg font-medium text-gray-900">Escrever uma Avaliação</h3>
+            <p className="mt-1 text-sm text-gray-500">Compartilhe sua opinião e ajude outros clientes.</p>
             
             <form onSubmit={handleReviewSubmit} className="mt-6 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700">Name</label>
+                <label className="block text-sm font-medium text-gray-700">Nome</label>
                 <input
                   type="text"
                   required
@@ -246,7 +246,7 @@ export default function ProductDetails() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Rating</label>
+                <label className="block text-sm font-medium text-gray-700">Nota</label>
                 <div className="mt-1 flex items-center gap-1">
                   {[1, 2, 3, 4, 5].map((star) => (
                     <button
@@ -261,7 +261,7 @@ export default function ProductDetails() {
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Comment</label>
+                <label className="block text-sm font-medium text-gray-700">Comentário</label>
                 <textarea
                   required
                   rows={4}
@@ -275,7 +275,7 @@ export default function ProductDetails() {
                 disabled={submittingReview}
                 className="w-full rounded-full bg-black px-4 py-3 text-sm font-medium text-white transition-colors hover:bg-gray-800 disabled:opacity-70"
               >
-                {submittingReview ? 'Submitting...' : 'Submit Review'}
+                {submittingReview ? 'Enviando...' : 'Enviar Avaliação'}
               </button>
             </form>
           </div>
@@ -283,7 +283,7 @@ export default function ProductDetails() {
           {/* Review List */}
           <div className="lg:col-span-2">
             {reviews.length === 0 ? (
-              <p className="text-gray-500">No reviews yet. Be the first to review this product!</p>
+              <p className="text-gray-500">Nenhuma avaliação ainda. Seja o primeiro a avaliar este produto!</p>
             ) : (
               <div className="space-y-8">
                 {reviews.map((review) => (

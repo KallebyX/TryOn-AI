@@ -59,7 +59,7 @@ export default function Home() {
             animate={{ opacity: 1, y: 0 }}
             className="text-4xl font-extrabold tracking-tight sm:text-5xl lg:text-6xl"
           >
-            Find Your Perfect Fit with AI
+            Encontre o Sapato Perfeito com IA
           </motion.h1>
           <motion.p 
             initial={{ opacity: 0, y: 20 }}
@@ -67,7 +67,7 @@ export default function Home() {
             transition={{ delay: 0.1 }}
             className="mx-auto mt-6 max-w-2xl text-xl text-gray-300"
           >
-            Upload your outfit and let our Fashion AI recommend the perfect shoes. Try them on virtually before you buy.
+            Envie uma foto do seu look e deixe nossa IA de Moda recomendar os sapatos perfeitos. Prove-os virtualmente antes de comprar.
           </motion.p>
           
           <motion.div 
@@ -86,7 +86,7 @@ export default function Home() {
               ) : (
                 <Camera className="h-5 w-5 transition-transform group-hover:rotate-12" />
               )}
-              {analyzing ? 'Analyzing Outfit...' : 'Analyze My Outfit'}
+              {analyzing ? 'Analisando Look...' : 'Analisar Meu Look'}
             </button>
             <input 
               type="file" 
@@ -105,21 +105,21 @@ export default function Home() {
           <div className="rounded-3xl bg-gradient-to-r from-indigo-50 to-purple-50 p-8 border border-indigo-100">
             <div className="flex items-center gap-3 mb-6">
               <Sparkles className="h-6 w-6 text-indigo-600" />
-              <h2 className="text-2xl font-bold text-gray-900">AI Fashion Stylist</h2>
+              <h2 className="text-2xl font-bold text-gray-900">Estilista de Moda IA</h2>
             </div>
             <p className="text-lg text-gray-700 mb-4">{recommendation.analysis}</p>
             <div className="flex flex-wrap gap-2 mb-8">
               <span className="inline-flex items-center rounded-full bg-indigo-100 px-3 py-1 text-sm font-medium text-indigo-800">
-                Style: <span className="capitalize ml-1">{recommendation.outfitStyle}</span>
+                Estilo: <span className="capitalize ml-1">{recommendation.outfitStyle}</span>
               </span>
               {recommendation.recommendedColors?.map((color: string) => (
                 <span key={color} className="inline-flex items-center rounded-full bg-purple-100 px-3 py-1 text-sm font-medium text-purple-800">
-                  Color: <span className="capitalize ml-1">{color}</span>
+                  Cor: <span className="capitalize ml-1">{color}</span>
                 </span>
               ))}
             </div>
 
-            <h3 className="text-xl font-semibold text-gray-900 mb-6">Recommended for this outfit:</h3>
+            <h3 className="text-xl font-semibold text-gray-900 mb-6">Recomendado para este look:</h3>
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
               {recommendation.recommendations?.map((product: any) => (
                 <ProductCard key={product.id} product={product} />
@@ -132,7 +132,7 @@ export default function Home() {
       {/* Product Feed */}
       <section className="mx-auto max-w-7xl px-4 pt-16 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between mb-8">
-          <h2 className="text-3xl font-bold tracking-tight text-gray-900">Trending Now</h2>
+          <h2 className="text-3xl font-bold tracking-tight text-gray-900">Tendências</h2>
         </div>
         
         {loading ? (

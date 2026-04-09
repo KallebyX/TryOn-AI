@@ -38,7 +38,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           to={`/product/${product.id}`}
           className="mt-4 w-full rounded-full bg-black py-2 text-center text-sm font-medium text-white transition-colors hover:bg-gray-800"
         >
-          Virtual Try-On
+          Provador Virtual
         </Link>
       </div>
     </motion.div>

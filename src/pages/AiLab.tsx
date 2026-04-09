@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { GoogleGenAI, Modality } from '@google/genai';
 import Markdown from 'react-markdown';
-import { MessageSquare, Image as ImageIcon, Video, Mic, Send, Sparkles, MapPin, Search } from 'lucide-react';
+import { MessageSquare, Image as ImageIcon, Video, Mic, Send, Sparkles, MapPin, Search, Camera } from 'lucide-react';
 
 // Initialize Gemini for general tasks
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
@@ -13,7 +13,7 @@ export default function AiLab() {
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
       <div className="flex items-center gap-3 mb-8">
         <Sparkles className="h-8 w-8 text-indigo-600" />
-        <h1 className="text-3xl font-bold tracking-tight text-gray-900">AI Innovation Lab</h1>
+        <h1 className="text-3xl font-bold tracking-tight text-gray-900">Laboratório de Inovação IA</h1>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
@@ -27,7 +27,7 @@ export default function AiLab() {
               }`}
             >
               <MessageSquare className="h-5 w-5" />
-              Fashion Assistant
+              Assistente de Moda
             </button>
             <button
               onClick={() => setActiveTab('image')}
@@ -36,7 +36,7 @@ export default function AiLab() {
               }`}
             >
               <ImageIcon className="h-5 w-5" />
-              Design Studio
+              Estúdio de Design
             </button>
             <button
               onClick={() => setActiveTab('video')}
@@ -45,7 +45,7 @@ export default function AiLab() {
               }`}
             >
               <Video className="h-5 w-5" />
-              Video Showcase
+              Vitrine de Vídeo
             </button>
             <button
               onClick={() => setActiveTab('live')}
@@ -54,7 +54,7 @@ export default function AiLab() {
               }`}
             >
               <Mic className="h-5 w-5" />
-              Live Consultation
+              Consultoria ao Vivo
             </button>
             <button
               onClick={() => setActiveTab('analysis')}
@@ -63,7 +63,7 @@ export default function AiLab() {
               }`}
             >
               <ImageIcon className="h-5 w-5" />
-              Image Analysis
+              Análise de Imagem
             </button>
           </nav>
         </div>
@@ -96,8 +96,8 @@ function ChatInterface() {
     const chat = ai.chats.create({
       model: "gemini-3.1-pro-preview",
       config: {
-        systemInstruction: "You are a helpful fashion assistant for TryOn AI Shoes. You can help users find shoes, check trends, and locate stores.",
-        tools: [{ googleSearch: {} }, { googleMaps: {} }],
+        systemInstruction: "Você é um assistente de moda útil para a TryOn AI Shoes. Você pode ajudar os usuários a encontrar sapatos, verificar tendências e localizar lojas.",
+        tools: [{ googleSearch: {} }],
         toolConfig: { includeServerSideToolInvocations: true }
       }
     });
@@ -122,7 +122,7 @@ function ChatInterface() {
       setMessages(prev => [...prev, { role: 'model', text: response.text || '' }]);
     } catch (error) {
       console.error('Chat error:', error);
-      setMessages(prev => [...prev, { role: 'model', text: 'Sorry, I encountered an error.' }]);
+      setMessages(prev => [...prev, { role: 'model', text: 'Desculpe, encontrei um erro.' }]);
     } finally {
       setLoading(false);
     }
@@ -132,12 +132,11 @@ function ChatInterface() {
     <div className="flex flex-col h-full max-h-[600px]">
       <div className="p-6 border-b border-gray-100 bg-gray-50 flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-semibold text-gray-900">Fashion Assistant</h2>
-          <p className="text-sm text-gray-500">Powered by Gemini 3.1 Pro with Search & Maps</p>
+          <h2 className="text-lg font-semibold text-gray-900">Assistente de Moda</h2>
+          <p className="text-sm text-gray-500">Alimentado por Gemini 3.1 Pro com Busca Google</p>
         </div>
         <div className="flex gap-2 text-gray-400">
           <Search className="h-5 w-5" />
-          <MapPin className="h-5 w-5" />
         </div>
       </div>
       
@@ -145,7 +144,7 @@ function ChatInterface() {
         {messages.length === 0 && (
           <div className="text-center text-gray-500 mt-10">
             <MessageSquare className="mx-auto h-12 w-12 text-gray-300 mb-4" />
-            <p>Hi! I can help you find the latest shoe trends or locate a store near you.</p>
+            <p>Olá! Posso ajudar você a encontrar as últimas tendências de calçados ou localizar uma loja próxima.</p>
           </div>
         )}
         {messages.map((msg, idx) => (
@@ -177,7 +176,7 @@ function ChatInterface() {
             type="text"
             value={input}
             onChange={e => setInput(e.target.value)}
-            placeholder="Ask about trends, stores, or shoe advice..."
+            placeholder="Pergunte sobre tendências, lojas ou conselhos de moda..."
             className="flex-1 rounded-full border-gray-300 bg-gray-50 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500"
           />
           <button
@@ -282,24 +281,24 @@ function ImageStudio() {
   return (
     <div className="p-8 h-full flex flex-col">
       <div className="flex justify-between items-center mb-2">
-        <h2 className="text-2xl font-bold text-gray-900">Design Studio</h2>
+        <h2 className="text-2xl font-bold text-gray-900">Estúdio de Design</h2>
         <div className="flex bg-gray-100 rounded-lg p-1">
           <button
             onClick={() => setMode('generate')}
             className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${mode === 'generate' ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500 hover:text-gray-700'}`}
           >
-            Generate
+            Gerar
           </button>
           <button
             onClick={() => setMode('edit')}
             className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${mode === 'edit' ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500 hover:text-gray-700'}`}
           >
-            Edit
+            Editar
           </button>
         </div>
       </div>
       <p className="text-gray-500 mb-8">
-        {mode === 'generate' ? 'Generate high-quality shoe designs using Gemini 3 Pro Image.' : 'Edit an existing image using Gemini 3.1 Flash Image.'}
+        {mode === 'generate' ? 'Gere designs de sapatos de alta qualidade usando Gemini 3 Pro Image.' : 'Edite uma imagem existente usando Gemini 3.1 Flash Image.'}
       </p>
 
       {mode === 'edit' && (
@@ -310,7 +309,7 @@ function ImageStudio() {
             ) : (
               <div className="text-center text-gray-500 text-sm">
                 <Camera className="mx-auto h-6 w-6 mb-1" />
-                Upload image to edit
+                Carregue a imagem para editar
               </div>
             )}
             <input type="file" accept="image/*" onChange={handleSourceImageUpload} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
@@ -323,7 +322,7 @@ function ImageStudio() {
           type="text"
           value={prompt}
           onChange={e => setPrompt(e.target.value)}
-          placeholder={mode === 'generate' ? "Describe a shoe design..." : "Describe how to edit the image..."}
+          placeholder={mode === 'generate' ? "Descreva um design de sapato..." : "Descreva como editar a imagem..."}
           className="flex-1 rounded-xl border-gray-300 shadow-sm p-3 border focus:ring-indigo-500 focus:border-indigo-500"
         />
         {mode === 'generate' && (
@@ -332,9 +331,9 @@ function ImageStudio() {
             onChange={e => setSize(e.target.value)}
             className="rounded-xl border-gray-300 shadow-sm p-3 border focus:ring-indigo-500 focus:border-indigo-500 bg-white"
           >
-            <option value="1K">1K Resolution</option>
-            <option value="2K">2K Resolution</option>
-            <option value="4K">4K Resolution</option>
+            <option value="1K">Resolução 1K</option>
+            <option value="2K">Resolução 2K</option>
+            <option value="4K">Resolução 4K</option>
           </select>
         )}
         <button
@@ -342,7 +341,7 @@ function ImageStudio() {
           disabled={loading || !prompt || (mode === 'edit' && !sourceImage)}
           className="rounded-xl bg-black px-6 py-3 font-medium text-white hover:bg-gray-800 disabled:opacity-50"
         >
-          {loading ? 'Processing...' : mode === 'generate' ? 'Generate' : 'Edit'}
+          {loading ? 'Processando...' : mode === 'generate' ? 'Gerar' : 'Editar'}
         </button>
       </div>
 
@@ -352,14 +351,14 @@ function ImageStudio() {
         {loading ? (
           <div className="flex flex-col items-center text-gray-400">
             <Sparkles className="h-12 w-12 animate-pulse mb-4" />
-            <p>{mode === 'generate' ? 'Designing your shoe...' : 'Editing image...'}</p>
+            <p>{mode === 'generate' ? 'Desenhando seu sapato...' : 'Editando imagem...'}</p>
           </div>
         ) : imageUrl ? (
           <img src={imageUrl} alt="Result" className="w-full h-full object-contain" />
         ) : (
           <div className="text-gray-400 flex flex-col items-center">
             <ImageIcon className="h-12 w-12 mb-2" />
-            <p>Your {mode === 'generate' ? 'design' : 'edited image'} will appear here</p>
+            <p>Seu {mode === 'generate' ? 'design' : 'imagem editada'} aparecerá aqui</p>
           </div>
         )}
       </div>
@@ -442,7 +441,7 @@ function VideoStudio() {
       }
     } catch (err: any) {
       console.error(err);
-      setError(err.message || 'Failed to generate video.');
+      setError(err.message || 'Falha ao gerar vídeo.');
     } finally {
       setLoading(false);
     }
@@ -450,8 +449,8 @@ function VideoStudio() {
 
   return (
     <div className="p-8 h-full flex flex-col">
-      <h2 className="text-2xl font-bold text-gray-900 mb-2">Video Showcase</h2>
-      <p className="text-gray-500 mb-8">Animate your shoe designs into cinematic videos using Veo.</p>
+      <h2 className="text-2xl font-bold text-gray-900 mb-2">Vitrine de Vídeo</h2>
+      <p className="text-gray-500 mb-8">Anime seus designs de sapatos em vídeos cinematográficos usando Veo.</p>
 
       <div className="mb-4">
         <div className="border-2 border-dashed border-gray-300 rounded-xl p-4 flex flex-col items-center justify-center h-32 relative bg-gray-50">
@@ -460,7 +459,7 @@ function VideoStudio() {
           ) : (
             <div className="text-center text-gray-500 text-sm">
               <Camera className="mx-auto h-6 w-6 mb-1" />
-              Upload an image to animate (optional)
+              Carregue uma imagem para animar (opcional)
             </div>
           )}
           <input type="file" accept="image/*" onChange={handleSourceImageUpload} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
@@ -472,7 +471,7 @@ function VideoStudio() {
           type="text"
           value={prompt}
           onChange={e => setPrompt(e.target.value)}
-          placeholder="Describe the video (e.g., A cinematic pan of a glowing sneaker)"
+          placeholder="Descreva o vídeo (ex: Um movimento cinematográfico de um tênis brilhante)"
           className="flex-1 rounded-xl border-gray-300 shadow-sm p-3 border focus:ring-indigo-500 focus:border-indigo-500"
         />
         <button
@@ -480,7 +479,7 @@ function VideoStudio() {
           disabled={loading || (!prompt && !sourceImage)}
           className="rounded-xl bg-black px-6 py-3 font-medium text-white hover:bg-gray-800 disabled:opacity-50"
         >
-          {loading ? 'Animating...' : 'Generate Video'}
+          {loading ? 'Animando...' : 'Gerar Vídeo'}
         </button>
       </div>
 
@@ -490,14 +489,14 @@ function VideoStudio() {
         {loading ? (
           <div className="flex flex-col items-center text-gray-400">
             <Video className="h-12 w-12 animate-pulse mb-4" />
-            <p>Generating video (this may take a few minutes)...</p>
+            <p>Gerando vídeo (isso pode levar alguns minutos)...</p>
           </div>
         ) : videoUrl ? (
           <video src={videoUrl} controls autoPlay loop className="w-full h-full object-contain" />
         ) : (
           <div className="text-gray-400 flex flex-col items-center">
             <Video className="h-12 w-12 mb-2" />
-            <p>Your video will appear here</p>
+            <p>Seu vídeo aparecerá aqui</p>
           </div>
         )}
       </div>
@@ -566,9 +565,9 @@ function LiveConsultation() {
         <Mic className={`h-12 w-12 ${isConnected ? 'text-indigo-600 animate-pulse' : 'text-gray-400'}`} />
       </div>
       
-      <h2 className="text-2xl font-bold text-gray-900 mb-2">Live Voice Consultation</h2>
+      <h2 className="text-2xl font-bold text-gray-900 mb-2">Consultoria de Voz ao Vivo</h2>
       <p className="text-gray-500 mb-8 max-w-md">
-        Talk directly to our AI Fashion Consultant. Get real-time advice on styles, fits, and trends.
+        Fale diretamente com nosso Consultor de Moda IA. Obtenha conselhos em tempo real sobre estilos, ajustes e tendências.
       </p>
 
       {error && <p className="text-red-500 mb-4">{error}</p>}
@@ -580,7 +579,7 @@ function LiveConsultation() {
           isConnected ? 'bg-red-500 hover:bg-red-600' : 'bg-indigo-600 hover:bg-indigo-700'
         } disabled:opacity-50`}
       >
-        {isConnecting ? 'Connecting...' : isConnected ? 'End Consultation' : 'Start Consultation'}
+        {isConnecting ? 'Conectando...' : isConnected ? 'Encerrar Consultoria' : 'Iniciar Consultoria'}
       </button>
     </div>
   );
@@ -624,7 +623,7 @@ function ImageAnalysis() {
       setResult(response.text || '');
     } catch (err) {
       console.error(err);
-      setResult('Failed to analyze image.');
+      setResult('Falha ao analisar imagem.');
     } finally {
       setLoading(false);
     }
@@ -632,8 +631,8 @@ function ImageAnalysis() {
 
   return (
     <div className="p-8 h-full flex flex-col">
-      <h2 className="text-2xl font-bold text-gray-900 mb-2">Image Analysis</h2>
-      <p className="text-gray-500 mb-8">Upload a photo of shoes or an outfit to get detailed AI insights.</p>
+      <h2 className="text-2xl font-bold text-gray-900 mb-2">Análise de Imagem</h2>
+      <p className="text-gray-500 mb-8">Carregue uma foto de sapatos ou um look para obter insights detalhados da IA.</p>
 
       <div className="flex flex-col md:flex-row gap-8 flex-1">
         <div className="flex-1 flex flex-col gap-4">
@@ -643,7 +642,7 @@ function ImageAnalysis() {
             ) : (
               <div className="text-center">
                 <Camera className="mx-auto h-12 w-12 text-gray-400 mb-2" />
-                <p className="text-gray-500">Click to upload an image</p>
+                <p className="text-gray-500">Clique para carregar uma imagem</p>
               </div>
             )}
             <input
@@ -659,7 +658,7 @@ function ImageAnalysis() {
               type="text"
               value={prompt}
               onChange={e => setPrompt(e.target.value)}
-              placeholder="Ask something about this image..."
+              placeholder="Pergunte algo sobre esta imagem..."
               className="flex-1 rounded-xl border-gray-300 shadow-sm p-3 border focus:ring-indigo-500 focus:border-indigo-500"
             />
             <button
@@ -667,24 +666,24 @@ function ImageAnalysis() {
               disabled={loading || !image || !prompt}
               className="rounded-xl bg-indigo-600 px-6 py-3 font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
             >
-              {loading ? 'Analyzing...' : 'Analyze'}
+              {loading ? 'Analisando...' : 'Analisar'}
             </button>
           </div>
         </div>
 
         <div className="flex-1 bg-gray-50 rounded-2xl border border-gray-200 p-6 overflow-y-auto max-h-[500px]">
-          <h3 className="font-semibold text-gray-900 mb-4">Analysis Result</h3>
+          <h3 className="font-semibold text-gray-900 mb-4">Resultado da Análise</h3>
           {loading ? (
             <div className="flex items-center gap-2 text-gray-500">
               <Sparkles className="h-5 w-5 animate-pulse" />
-              <span>Gemini is analyzing...</span>
+              <span>Gemini está analisando...</span>
             </div>
           ) : result ? (
             <div className="markdown-body text-sm text-gray-700">
               <Markdown>{result}</Markdown>
             </div>
           ) : (
-            <p className="text-gray-400 text-sm">Upload an image and ask a question to see the result here.</p>
+            <p className="text-gray-400 text-sm">Carregue uma imagem e faça uma pergunta para ver o resultado aqui.</p>
           )}
         </div>
       </div>
